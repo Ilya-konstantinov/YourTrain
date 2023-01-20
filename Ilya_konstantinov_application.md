@@ -68,7 +68,7 @@ Windows, 50мб места на носителе, 300мб оперативной
  *   Framework **WPF**
 
 Хранение данных:
- * Firebase
+ * Microsoft MySQL server
 
 ## [ ЭТАПЫ РАЗРАБОТКИ ]
 
