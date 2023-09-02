@@ -1,1 +1,3 @@
-user_scripts_example.md
+.vscode/
+config.py
+raw_req.py
