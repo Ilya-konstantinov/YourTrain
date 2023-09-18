@@ -1,108 +1,145 @@
 import datetime
-import re
 
-from datetime import timedelta
-from data.answer_enums import BAD_REQEST, HELP
 from aiogram.types import Message
 from aiogram.filters import CommandObject
 from aiogram.enums import ParseMode
-from datetime import datetime
-from model import model
+from core.model import model
+from core.model.arg_format import *
 
 
-sort_dict = {
-    ('dpt', 'departure_time', '0') : 0,
-    ('1','arrival_time','art') : 1,
-    ('2', 'path_time','pht') : 2
-}
-
-
-filter_dict = {
-    ("all", '0') : 0,
-    ("1", 'speed', 'sd') : 1,
-    ('2', 'rg') : 2,
-}
-
-
-
-async def bl_req(message: Message, command: CommandObject, col: int):
+async def bl_mlt_req(message: Message, command: CommandObject, col: int = 5):
     if not command.args:
         await message.answer(BAD_REQEST.ZERO_ARGS)
         return
-    
+
     if command.args.count(' ') == 0:
         await message.answer(BAD_REQEST.TOO_MANY_ARGS)
         return
-    
-    sort_type:int = 0 ## Default for sort (departure time)
-    filter_type:int = 0 ## Default for filter (all)
+
+    st, args = command.args.split('\n')
+    st_from, st_to = st.split(' -- ')
+    st_from, st_to = st_from.split(), st_to.split()
+
+    filter_type: int = 0
+    sort_type: int = 0
+    col: int = 5
+    dep_time: datetime = datetime.datetime.now()
+
+    if len(args) > 0:
+        time = args[0]
+        tmp_time = time_arg(time=time, dep_time=dep_time)
+        if isinstance(tmp_time, str):
+            await message.answer(tmp_time)
+            return
+
+        dep_time = tmp_time
+
+    if len(args) > 1:
+        tmp_sort = sort_arg(args[1])
+        if isinstance(tmp_sort, str):
+            await message.answer(tmp_sort)
+            return
+        else:
+            sort_type = tmp_sort
+
+    if len(args) > 2:
+        tmp_filter = filter_arg(args[2])
+        if isinstance(tmp_filter, str):
+            await message.answer(tmp_filter)
+            return
+        else:
+            filter_type = tmp_filter
+
+    if len(args) > 5:
+        try:
+            col = int(args[5])
+            if not (1 <= col <= 20):
+                raise "Bad args"
+        except:
+            await message.answer(BAD_REQEST.BAD_COL)
+            return
+
+    ans: list = []
+
+    for fr in st_from:
+        for to in st_to:
+            ans += model.req(station_from=fr, station_to=to, sort_type=sort_type, dep_time=dep_time,
+                             filter_type=filter_type)
+            model.paths_sort(ans, sort_type)
+            ans = ans[:col]
+
+
+async def bl_req(message: Message, command: CommandObject, col: int = 5):
+    if not command.args:
+        await message.answer(BAD_REQEST.ZERO_ARGS)
+        return
+
+    if command.args.count(' ') == 0:
+        await message.answer(BAD_REQEST.TOO_MANY_ARGS)
+        return
+
+    sort_type: int = 0  # Default for sort (departure time)
+    filter_type: int = 0  # Default for filter (all)
     dep_time = datetime.now()
     args = command.args.split()
     st1 = args[0]
     st2 = args[1]
-    
-    if (len(args) > 2):
-        if (re.fullmatch(r'(\+|-)\d+', args[2])):
-            dep_time += (1 if args[2][0] == '+' else -1) * timedelta(minutes=int(args[2][1:]))
-        elif args[2] == '0':
-            ...
-        elif (re.fullmatch(r'[0-2]?[0-9]\.[0-5][0-9]', args[2])):
-            tmp_time = datetime.strptime(args[2], "%H.%M")
-            dep_time = dep_time.replace(hour=tmp_time.hour, minute=tmp_time.minute)
-        elif (re.fullmatch(r'[0-2]?[0-9]:[0-5][0-9]', args[2])):
-            tmp_time = datetime.strptime(args[2], "%H:%M")
-            dep_time = dep_time.replace(hour=tmp_time.hour, minute=tmp_time.minute)
-        else:
-            await message.answer(BAD_REQEST.BAD_TIME)
+    if len(args) > 2:
+        time = args[2]
+        tmp_time = time_arg(time=time, dep_time=dep_time)
+        if isinstance(tmp_time, str):
+            await message.answer(tmp_time)
             return
-    
-    if (len(args) > 3):
-        for tp in sort_dict:
-            if (args[3] in tp):
-                sort_type = sort_dict[tp]
-                break
-        else:
-            await message.answer(BAD_REQEST.BAD_SORT)
+
+        dep_time = tmp_time
+
+    if len(args) > 3:
+        tmp_sort = sort_arg(args[3])
+        if isinstance(tmp_sort, str):
+            await message.answer(tmp_sort)
             return
-    
-    if (len(args) > 4):
-        for tp in filter_dict:
-            if (args[4] in tp):
-                filter_type = filter_dict[tp]
-                break
         else:
-            await message.answer(BAD_REQEST.BAD_FILTER)
+            sort_type = tmp_sort
+
+    if len(args) > 4:
+        tmp_filter = filter_arg(args[4])
+        if isinstance(tmp_filter, str):
+            await message.answer(tmp_filter)
             return
-            
-    if (len(args) > 5):
+        else:
+            filter_type = tmp_filter
+
+    if len(args) > 5:
         try:
             col = int(args[5])
             if not (1 <= col <= 20):
-                raise "Bad args" 
+                raise "Bad args"
         except:
             await message.answer(BAD_REQEST.BAD_COL)
             return
-    
 
-    req:list = model.req( station_from= st1, station_to= st2, dep_time=dep_time , sort_type= sort_type, filter_type= filter_type, col= col) 
-    
-    if (req is None): ## None if server fault
+    req: list = model.req(station_from=st1, station_to=st2, dep_time=dep_time, sort_type=sort_type,
+                          filter_type=filter_type, col=col)
+
+    if req is None:  # None if server fault
         await message.answer(BAD_REQEST.SERVER_ERROR)
         return
-    
-    if (req == []): ## Empty list if incorrect agrs or too late time
+
+    if not req:  # Empty list if incorrect args or too late time
         await message.answer(BAD_REQEST.ZERO_ANSWER)
         return
-    
-    ans = f'\n{"-"*30}\n'.join(
+
+    ans = f'\n{"-" * 30}\n'.join(
         [
             it.get_view() for it in req
         ]
     )
-    
-    ans = '```\n'+ans+'```'
+    ans = '```\n' + ans + '```'
+    if len(req) != 4:
+        ans += '\n⠀'
     await message.answer(f"{ans}", parse_mode=ParseMode.MARKDOWN_V2)
-    
+
+
 async def bl_help(message: Message, command: CommandObject):
     match command.args:
         case None:

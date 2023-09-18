@@ -63,7 +63,10 @@ class Path:
         
         zero_line = f'{start_tile:<10}{" "*10}{finish_title:>10}'
         second_line = f'{dep_title:<12}{" "*6}{arr_tile:>12}'
-        third_line = f'Через {beauty_path_time(self.departure_time - now )}'
+        if (self.departure_time >= now):
+            third_line = f'Через {beauty_path_time(self.departure_time - now )}'
+        else:
+            return '\n'.join([zero_line, time, second_line])
         return '\n'.join([zero_line, time, second_line, third_line])
   
     
