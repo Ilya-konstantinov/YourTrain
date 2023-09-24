@@ -1,7 +1,7 @@
-from model.path import Station, Path
+from core.model.path import Station, Path
 import datetime
 from datetime import datetime
-import model.raw_req as raw_req
+import core.model.raw_req as raw_req
 import json
 
 
