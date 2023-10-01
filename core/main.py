@@ -6,8 +6,11 @@ from aiogram import Bot, Dispatcher
 from aiogram.types import Message
 from data.config import TOKEN
 from aiogram.filters import Command, CommandObject
-from handler.basic import *
+from handler.service import bl_set, bl_help, bl_start
+from handler.req import bl_req, bl_mlt_req
+from handler.cache import new_cache_path
 from aiogram.enums import ParseMode
+from database.dataframe import DB
 
 logging.basicConfig(level=logging.INFO)
 
@@ -44,11 +47,18 @@ async def mlt_req(message: Message, command: CommandObject):
     ans = await bl_mlt_req(user_id=message.from_user.id, args=command.args)
     await message.answer(ans, parse_mode=ParseMode.MARKDOWN_V2)
 
+
 @dp.message(Command("set"))
 async def set_par(message: Message, command: CommandObject):
-    ans = await bl_set(user_id = message.from_user.id, args = command.args)
-    if ans:
-        await message.answer(ans)
+    ans = await bl_set(user_id=message.from_user.id, args=command.args)
+    await message.answer(ans)
+
+
+@dp.message(Command("cache"))
+async def cache(message: Message, command: CommandObject):
+    ans = await new_cache_path(user_id=message.from_user.id, args=command.args)
+    await message.answer(ans)
+
 
 async def main() -> None:
     bot = Bot(token=TOKEN)

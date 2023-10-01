@@ -69,3 +69,4 @@ def get_station(station: str) -> Station:
 
 def get_whole_path(id: int) -> list[tuple[str | bool]]:
     return raw_req.get_whole_path(id)
+
