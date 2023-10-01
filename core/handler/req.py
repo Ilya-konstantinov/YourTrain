@@ -16,10 +16,25 @@ async def bl_mlt_req(user_id: int, args: str):
     if isinstance(cor_args, str):
         return cor_args
 
-    cor_st, cor_args = cor_args
-    st_from, st_to = cor_st
-    dep_time, sort_type, filter_type, col = cor_args
+    return mlt_ans(*cor_args)
 
+
+async def bl_req(user_id: int, args: str):
+    if not args:
+        return BAD_REQEST.ZERO_ARGS
+
+    if args.count(' ') == 0:
+        return BAD_REQEST.TOO_MANY_ARGS
+
+    args = single_req_parse(user_id, args)
+
+    if isinstance(args, str):
+        return args
+
+    return singe_ans(*args)
+
+
+def mlt_ans(st_from, st_to, dep_time, sort_type, filter_type, col):
     req: list[model.Path] = []
 
     for fr in st_from:
@@ -47,20 +62,7 @@ async def bl_mlt_req(user_id: int, args: str):
     return ans
 
 
-async def bl_req(user_id: int, args: str):
-    if not args:
-        return BAD_REQEST.ZERO_ARGS
-
-    if args.count(' ') == 0:
-        return BAD_REQEST.TOO_MANY_ARGS
-
-    args = single_req_parse(user_id, args)
-
-    if isinstance(args, str):
-        return args
-
-    st1, st2, dep_time, sort_type, filter_type, col = args
-
+def singe_ans(st1, st2, dep_time, sort_type, filter_type, col):
     req: list = model.req(station_from=st1, station_to=st2, dep_time=dep_time, sort_type=sort_type,
                           filter_type=filter_type, col=col)
 
@@ -79,7 +81,6 @@ async def bl_req(user_id: int, args: str):
     if len(req) != 4:
         ans += '\n⠀'
     return ans
-
 
 def single_req_parse(uid: int, args: str) -> str | tuple:
     args = args.split()

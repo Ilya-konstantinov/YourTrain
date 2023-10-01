@@ -1,5 +1,5 @@
 from core.database.dataframe import DB
-from core.handler.req import single_req_parse, multi_req_parse
+from core.handler.req import single_req_parse, multi_req_parse, mlt_ans, singe_ans
 from core.data.answer_enums import CACHE_REQ, BAD_REQEST
 from core.model.arg_format import cor_name, filter_arg, sort_arg
 from core.model.model import get_station
@@ -42,13 +42,18 @@ async def new_cache_path(user_id: int, args: str):
     return CACHE_REQ.SUCCESS
 
 
-def get_cache_req(user_id: int, args: str):
+async def get_cache_req(user_id: int, args: str):
     if not cor_name(args):
         return CACHE_REQ.BAD_NAME
 
-    args = DB.cache_req_get(user_id,args)
+    args = DB.cache_req_get(user_id, args)
 
     if not args:
         return CACHE_REQ.BAD_NAME
 
     stations, args, is_mlt = args
+
+    if is_mlt:
+        return mlt_ans(*stations, *args)
+    else:
+        return singe_ans(*stations, *args)

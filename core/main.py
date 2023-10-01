@@ -8,7 +8,7 @@ from data.config import TOKEN
 from aiogram.filters import Command, CommandObject
 from handler.service import bl_set, bl_help, bl_start
 from handler.req import bl_req, bl_mlt_req
-from handler.cache import new_cache_path
+from handler.cache import new_cache_path, get_cache_req
 from aiogram.enums import ParseMode
 from database.dataframe import DB
 
@@ -58,6 +58,12 @@ async def set_par(message: Message, command: CommandObject):
 async def cache(message: Message, command: CommandObject):
     ans = await new_cache_path(user_id=message.from_user.id, args=command.args)
     await message.answer(ans)
+
+
+@dp.message(Command("get"))
+async def get_cache(message: Message, command: CommandObject):
+    ans = await get_cache_req(message.from_user.id, command.args)
+    await message.answer(ans, parse_mode=ParseMode.MARKDOWN_V2)
 
 
 async def main() -> None:

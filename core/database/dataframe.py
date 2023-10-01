@@ -68,11 +68,14 @@ class DataBase:
         return True
 
     def cache_req_get(self, uid: int, identification: str | int) -> bool | tuple[str, str, bool]:  # TODO need test
+
+        identification = ind_format(identification)
+
         if not self.cache_req_exists(uid, identification):
             return False
 
         column_title = ('name' if isinstance(identification, str) else 'number')
-        qer = (f"SELECT dep_st_id, arr_st_id, dep_type, sort_type, filter_type, col, is_mlt FROM req_cache "
+        qer = (f"SELECT dep_st_id, arr_st_id, dep_time, sort_type, filter_type, col, is_mlt FROM req_cache "
                f"WHERE {column_title} = %s AND user_id = %s;")
         params = [identification, uid]
         self.cur.execute(qer, params)
@@ -81,10 +84,12 @@ class DataBase:
 
         if dep_time is None:
             dep_time = datetime.now()
+        else:
+            dep_time = datetime.today().replace(hour=dep_time.seconds//3600, minute=(dep_time.seconds%3600)//60)
 
         is_mlt: bool = bool(ans[-1])
         dep_st_id, arr_st_id = ans[:2]
-        dep_st_id, arr_st_id = json.load(dep_st_id), json.load(arr_st_id)
+        dep_st_id, arr_st_id = json.loads(dep_st_id), json.loads(arr_st_id)
 
         for ind, st in enumerate(dep_st_id):
             dep_st_id[ind] = self.station_by_id(st)
@@ -92,9 +97,7 @@ class DataBase:
         for ind, st in enumerate(arr_st_id):
             arr_st_id[ind] = self.station_by_id(st)
 
-        stations: str = (' -- ' if is_mlt else ' - ').join([' '.join(dep_st_id), ' '.join(arr_st_id)])
-        args: str = ' '.join([str(arg) for arg in [dep_time, sort_type, filter_type, col]])
-        return stations, args, is_mlt
+        return (dep_st_id, arr_st_id), (dep_time, sort_type, filter_type, col), is_mlt
 
     def station_by_id(self, st_id: int) -> int:  # TODO need test
         qer = "SELECT title FROM station_cache WHERE id = %s"
@@ -116,4 +119,14 @@ class DataBase:
         self.cur.execute(qer, params)
         return not (self.cur.fetchone() is None)
 
+
 DB = DataBase()
+
+
+def ind_format(identification: str) -> str | int:
+    try:
+        identification = int(identification)
+    except:
+        ...
+
+    return identification
