@@ -5,7 +5,7 @@ from core.model.arg_format import time_arg, filter_arg, sort_arg
 from core.model import model
 
 
-async def bl_mlt_req(user_id: int, args: str):
+async def bl_mlt_req(user_id: int, args: str, raw_ans: bool = False):
     if not args:
         return BAD_REQEST.ZERO_ARGS
 
@@ -16,10 +16,10 @@ async def bl_mlt_req(user_id: int, args: str):
     if isinstance(cor_args, str):
         return cor_args
 
-    return mlt_ans(*cor_args)
+    return mlt_ans(*cor_args, raw_ans=raw_ans)
 
 
-async def bl_req(user_id: int, args: str):
+async def bl_req(user_id: int, args: str, raw_ans: bool = False):
     if not args:
         return BAD_REQEST.ZERO_ARGS
 
@@ -31,10 +31,10 @@ async def bl_req(user_id: int, args: str):
     if isinstance(args, str):
         return args
 
-    return singe_ans(*args)
+    return singe_ans(*args, raw_ans=raw_ans)
 
 
-def mlt_ans(st_from, st_to, dep_time, sort_type, filter_type, col):
+def mlt_ans(st_from, st_to, dep_time, sort_type, filter_type, col, raw_ans):
     req: list[model.Path] = []
 
     for fr in st_from:
@@ -50,19 +50,13 @@ def mlt_ans(st_from, st_to, dep_time, sort_type, filter_type, col):
     if not req:  # Empty list if incorrect args or too late time
         return BAD_REQEST.ZERO_ANSWER
 
-    ans: str = f'\n{"-" * 30}\n'.join(
-        [
-            it.get_view() for it in req
-        ]
-    )
-    if ans.find("Через") == -1:
-        ans += '\n⠀'
-    ans = '```\n' + ans + '```'
-
-    return ans
+    if raw_ans:
+        return req
+    else:
+        return ans_format(req)
 
 
-def singe_ans(st1, st2, dep_time, sort_type, filter_type, col):
+def singe_ans(st1, st2, dep_time, sort_type, filter_type, col, raw_ans):
     req: list = model.req(station_from=st1, station_to=st2, dep_time=dep_time, sort_type=sort_type,
                           filter_type=filter_type, col=col)
 
@@ -72,6 +66,13 @@ def singe_ans(st1, st2, dep_time, sort_type, filter_type, col):
     if not req:  # Empty list if incorrect args or too late time
         return BAD_REQEST.ZERO_ANSWER
 
+    if raw_ans:
+        return req
+    else:
+        return ans_format(req)
+
+
+def ans_format(req):
     ans = f'\n{"-" * 30}\n'.join(
         [
             it.get_view() for it in req

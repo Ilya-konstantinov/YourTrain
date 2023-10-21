@@ -1,21 +1,28 @@
 import logging
 import asyncio
+import schedule
 import sys
+from threading import Timer
 
 from aiogram import Bot, Dispatcher
 from aiogram.types import Message
-from data.config import TOKEN
+from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command, CommandObject
+from aiogram.enums import ParseMode
+
+from data.config import TOKEN
+from FSMachines import MStates
+from database.dataframe import DB
 from handler.service import bl_set, bl_help, bl_start
 from handler.req import bl_req, bl_mlt_req
-from handler.cache import new_cache_path, get_cache_req
-from aiogram.enums import ParseMode
-from database.dataframe import DB
+from handler.cache_req import new_cache_req, get_cache_req
+from handler.cache_path import cache_path, num_path, refr_sched
 
 logging.basicConfig(level=logging.INFO)
 
 # Initialize bot and dispatcher
 dp = Dispatcher()
+user_cache_path: dict[int, list]
 
 
 @dp.message(Command("req"))
@@ -24,13 +31,27 @@ async def cmd_req(message: Message, command: CommandObject):
     await message.answer(ans, parse_mode=ParseMode.MARKDOWN_V2)
 
 
+@dp.message(Command("path_cache"))
+async def cmd_path_cache(message: Message, command: CommandObject, state: FSMContext):
+    await state.set_state(MStates.CachePath.get_path)
+    ans = await cache_path(message.from_user.id, command.args)
+    await message.answer(ans + "\nВыведите номер пути, который хотите добавить\n⠀", parse_mode=ParseMode.MARKDOWN_V2)
+
+
+@dp.message(MStates.CachePath.get_path)
+async def path_num(message: Message, state: FSMContext):
+    await state.set_state(MStates.CachePath.num_path)
+    ans = await num_path(message.from_user.id, message.text)
+    await message.answer(ans)
+
+
 @dp.message(Command("start"))
 async def cmd_start(message: Message):
     user = message.from_user
     user_exists = DB.user_exist(user.id)
 
     if not user_exists:
-        DB.user_create(user.id, user.first_name)
+        DB.user_create(user.id, user.first_name, message.chat.id)
 
     ans = await bl_start(user_id=user.id, user_exists=user_exists)
     await message.answer(ans)
@@ -56,7 +77,7 @@ async def set_par(message: Message, command: CommandObject):
 
 @dp.message(Command("cache"))
 async def cache(message: Message, command: CommandObject):
-    ans = await new_cache_path(user_id=message.from_user.id, args=command.args)
+    ans = await new_cache_req(user_id=message.from_user.id, args=command.args)
     await message.answer(ans)
 
 
@@ -74,3 +95,4 @@ async def main() -> None:
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     asyncio.run(main())
+    asyncio.run(refr_sched())

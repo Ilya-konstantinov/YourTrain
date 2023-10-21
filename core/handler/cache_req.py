@@ -1,11 +1,13 @@
 from core.database.dataframe import DB
 from core.handler.req import single_req_parse, multi_req_parse, mlt_ans, singe_ans
-from core.data.answer_enums import CACHE_REQ, BAD_REQEST
-from core.model.arg_format import cor_name, filter_arg, sort_arg
+from core.data.answer_enums import CACHE_REQ
+from core.model.arg_format import cor_name
 from core.model.model import get_station
+from threading import Timer
 
 
-async def new_cache_path(user_id: int, args: str):
+
+async def new_cache_req(user_id: int, args: str):
     filter_type, sort_type, col = DB.user_params(uid=user_id)[1:]
     is_mlt: bool = False
 
@@ -57,3 +59,4 @@ async def get_cache_req(user_id: int, args: str):
         return mlt_ans(*stations, *args)
     else:
         return singe_ans(*stations, *args)
+
