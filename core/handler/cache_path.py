@@ -92,4 +92,4 @@ async def refr_sched(bot) -> None:
     while True:
         schedule.run_pending()
         await aioschedule.run_pending()
-        time.sleep(1)
+        await asyncio.sleep(1)

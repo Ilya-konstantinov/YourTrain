@@ -92,10 +92,13 @@ async def bot_start(bot) -> None:
 
 async def main() -> None:
     bot = Bot(token=TOKEN)
-    await bot_start(bot)
-    await dp.start_polling(bot)
+    await asyncio.gather(bot_start(bot), refr_sched(bot))
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
-    asyncio.run(main())
+    loop = asyncio.get_event_loop()
+    try:
+        loop.run_until_complete(main())
+    finally:
+        loop.close()
