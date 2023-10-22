@@ -90,15 +90,12 @@ async def bot_start(bot) -> None:
     await dp.start_polling(bot)
 
 
-async def main(bot):
-    await asyncio.gather(bot_start(bot), refr_sched(bot))
+async def main() -> None:
+    bot = Bot(token=TOKEN)
+    await bot_start(bot)
+    await dp.start_polling(bot)
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
-    bot = Bot(token=TOKEN)
-    loop = asyncio.get_event_loop()
-    try:
-        loop.run_until_complete(main(bot))
-    finally:
-        loop.close()
+    asyncio.run(main())
