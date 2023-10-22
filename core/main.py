@@ -1,8 +1,7 @@
 import logging
 import asyncio
-import schedule
 import sys
-from threading import Timer
+import threading
 
 from aiogram import Bot, Dispatcher
 from aiogram.types import Message
@@ -87,12 +86,20 @@ async def get_cache(message: Message, command: CommandObject):
     await message.answer(ans, parse_mode=ParseMode.MARKDOWN_V2)
 
 
-async def main() -> None:
-    bot = Bot(token=TOKEN)
+async def main(bot) -> None:
+    # await refr_sched(bot)
     await dp.start_polling(bot)
+
+
+async def kostil(bot):
+    await asyncio.gather(main(bot),refr_sched(bot))
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
-    asyncio.run(main())
-    asyncio.run(refr_sched())
+    bot = Bot(token=TOKEN)
+    loop = asyncio.get_event_loop()
+    try:
+        loop.run_until_complete(kostil(bot))
+    finally:
+        loop.close()

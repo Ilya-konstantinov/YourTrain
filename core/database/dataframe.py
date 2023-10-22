@@ -169,7 +169,7 @@ class DataBase:
         keys = ["path_id", "user_id", "dep_st", "arr_st", "dep_time"]
         params = [uid, pid]
         self.cur.execute(qer, params)
-        val = self.cur.fetchone()
+        val = self.cur.fetchall()[0]
         return {keys[i]: val[i] for i in range(5)}
 
 

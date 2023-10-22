@@ -3,8 +3,6 @@ from core.handler.req import single_req_parse, multi_req_parse, mlt_ans, singe_a
 from core.data.answer_enums import CACHE_REQ
 from core.model.arg_format import cor_name
 from core.model.model import get_station
-from threading import Timer
-
 
 
 async def new_cache_req(user_id: int, args: str):
