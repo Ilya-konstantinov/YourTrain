@@ -1,5 +1,4 @@
 from core.model.path import Station, Path
-import datetime
 from datetime import datetime
 import core.model.raw_req as raw_req
 import json
@@ -12,15 +11,15 @@ def get_path(dep_st: Station, arr_st: Station, dep_time: datetime = datetime.now
     cur_list = list()
 
     for path in raw_json:
+        if dep_time > raw_req.str_to_time(path["departureTime"]):
+            continue
         is_speed: bool = not path["trainCategoryId"] == 4
-        if (is_speed and filter_type == 2):
+        if is_speed and filter_type == 2:
             continue
 
-        if (not is_speed and filter_type == 1):
+        if not is_speed and filter_type == 1:
             continue
 
-        if (dep_time > raw_req.str_to_time(path["departureTime"])):
-            continue
 
         cur_list.append(
             Path(
@@ -33,7 +32,7 @@ def get_path(dep_st: Station, arr_st: Station, dep_time: datetime = datetime.now
             )
         )
 
-        if (len(cur_list) >= col and len(cur_list) >= 5):
+        if len(cur_list) >= col and len(cur_list) >= 5:
             break
 
     cur_list = paths_sort(cur_list, sort_type)
@@ -43,7 +42,7 @@ def get_path(dep_st: Station, arr_st: Station, dep_time: datetime = datetime.now
 
 def req(station_from: str, station_to: str, sort_type: int = 1, dep_time: datetime = datetime.now(),
         filter_type: int = 1, col: int = 10) -> list:
-    if (col <= 0):
+    if col <= 0:
         return []
     return get_path(get_station(station_from), get_station(station_to), dep_time=dep_time, sort_type=sort_type,
                     filter_type=filter_type, col=col)
@@ -60,12 +59,8 @@ def paths_sort(cur_list: list[Path], sort_type: int = 0) -> list[Path]:
 
 
 def get_station(station: str) -> Station:
-    json = raw_req.get_station(station)
+    raw_json = raw_req.get_station(station)
     return Station(
-        json["id"],
-        json["name"]
+        raw_json["id"],
+        raw_json["name"]
     )
-
-
-def get_whole_path(id: int) -> list[tuple[str | bool]]:
-    return raw_req.get_whole_path(id)

@@ -1,10 +1,11 @@
 from datetime import datetime, timedelta
-from core.data.answer_enums import *
+from core.data.answer_enums import BAD_REQEST
 from core.data.config import filter_dict, sort_dict, type_interp
 import re
 
 
-def time_arg(time: str, dep_time: datetime) -> str | datetime:
+def time_arg(time: str) -> str | datetime:
+    dep_time = datetime.now()
     try:
         if re.fullmatch(r'[+\-]\d+', time):  # For +del time
             dep_time += timedelta(minutes=int(time))
@@ -69,6 +70,5 @@ def param_var(var: str) -> int:
     return var
 
 
-def cor_name(name: str):
-    return re.fullmatch(r'[A-z_А-я]+', name)
-    return SET.BAD_VAR
+def cor_name(name: str) -> bool:
+    return re.fullmatch(r'[A-z_А-я0-9]+', name)
