@@ -86,13 +86,12 @@ async def get_cache(message: Message, command: CommandObject):
     await message.answer(ans, parse_mode=ParseMode.MARKDOWN_V2)
 
 
-async def main(bot) -> None:
-    # await refr_sched(bot)
+async def bot_start(bot) -> None:
     await dp.start_polling(bot)
 
 
-async def kostil(bot):
-    await asyncio.gather(main(bot),refr_sched(bot))
+async def main(bot):
+    await asyncio.gather(bot_start(bot), refr_sched(bot))
 
 
 if __name__ == '__main__':
@@ -100,6 +99,6 @@ if __name__ == '__main__':
     bot = Bot(token=TOKEN)
     loop = asyncio.get_event_loop()
     try:
-        loop.run_until_complete(kostil(bot))
+        loop.run_until_complete(main(bot))
     finally:
         loop.close()

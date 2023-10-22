@@ -76,20 +76,20 @@ async def refresh_path(bot, uid: int, pid: int):
     to_dep_time = dep_time_new - date_to_delta(datetime.datetime.now())
     to_dep_time_f = f'{to_dep_time.seconds//60}'
     dep_st_f = DB.station_by_id(path_old['dep_st'])
-    ans_ft = CACHE_PATH.MESSAGE_F.format(to_dep_time_f, dep_time_new_f, dep_st_f)
+    ans = CACHE_PATH.MESSAGE_F.format(to_dep_time_f, dep_time_new_f, dep_st_f)
 
     if changes:
         status: str = 'раньше' if dep_time_new < timedelta(seconds=1) else 'позже'
         delta_f = f'{abs(delta).seconds//60}'
-        ans_ft += CACHE_PATH.CHANGE_F(delta_f, status)
+        ans += CACHE_PATH.CHANGE_F(delta_f, status)
 
-    await bot.send_message(uid, ans_ft)
+    await bot.send_message(uid, ans)
     return aioschedule.CancelJob
 
 
 async def refr_sched(bot) -> None:
     schedule.every().day.at("02:00").do(refresh_whole_path, bot=bot)
-    while(1):
+    while True:
         schedule.run_pending()
         await aioschedule.run_pending()
         time.sleep(1)
