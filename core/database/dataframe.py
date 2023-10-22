@@ -147,7 +147,7 @@ class DataBase:
             Station(
                 id=dep_time,
                 title=self.station_by_id(dep_st)
-                ),
+            ),
             Station(
                 id=arr_st,
                 title=self.station_by_id(arr_st)
@@ -157,20 +157,53 @@ class DataBase:
 
         return dep_st, arr_st, dep_time
 
-    def get_whole_cache_path(self) -> list[dict[str, ]]:
-        qer = "SELECT path_id, user_id, dep_st, arr_st, dep_time FROM path_cache"
+    def get_whole_cache_path(self) -> list[dict[str,]]:
+        qer = "SELECT path_id, user_id, dep_st, arr_st, dep_time FROM path_cache;"
         keys = ["path_id", "user_id", "dep_st", "arr_st", "dep_time"]
         self.cur.execute(qer)
         values = self.cur.fetchall()
         return [{keys[i]: val[i] for i in range(5)} for val in values]
 
-    def get_one_cache_path(self, uid: int, pid: int) -> dict[str, ]:
-        qer = "SELECT path_id, user_id, dep_st, arr_st, dep_time FROM path_cache WHERE user_id = %s and path_id = %s"
+    def get_one_cache_path(self, uid: int, pid: int) -> dict[str,]:
+        qer = "SELECT path_id, user_id, dep_st, arr_st, dep_time FROM path_cache WHERE user_id = %s and path_id = %s;"
         keys = ["path_id", "user_id", "dep_st", "arr_st", "dep_time"]
         params = [uid, pid]
         self.cur.execute(qer, params)
         val = self.cur.fetchall()[0]
         return {keys[i]: val[i] for i in range(5)}
+
+    # <-------------------------------------------------PATH_CACHE------------------------------------------------->
+    # <--------------------------------------------------GET_JSON-------------------------------------------------->
+
+    def get_user_path(self, uid: int) -> list[dict[str,]]:
+        keys = ["path_id", "user_id", "dep_st", "arr_st", "dep_time"]
+        qer = (f"SELECT {', '.join(keys)} FROM path_cache "
+               "WHERE user_id = %s;")
+
+        params = [uid]
+        self.cur.execute(qer, params)
+        vals = self.cur.fetchall()
+        return [{keys[i]: val[i] for i in range(len(keys))} for val in vals]
+
+    def get_user_req(self, uid: int) -> list[dict[str,]]:
+        keys = ["dep_st_id", "arr_st_id", "dep_time", "sort_type", "filter_type", "col", "is_mlt"]
+        qer = (f"SELECT {', '.join(keys)} FROM req_cache "
+               f"WHERE user_id = %s;")
+
+        params = [uid]
+        self.cur.execute(qer, params)
+        vals = self.cur.fetchall()
+        return [{keys[i]: val[i] for i in range(len(keys))} for val in vals]
+
+    def get_user_settings(self, uid: int) -> dict[str,]:
+        keys = ["id", "name", "filter_type", "sort_type", "col", "chat_id"]
+        qer = (f"SELECT {', '.join(keys)} FROM users "
+               f"WHERE id = %s LIMIT 1;")
+
+        params = [uid]
+        self.cur.execute(qer, params)
+        val = self.cur.fetchall()[0]
+        return {keys[i]: val[i] for i in range(len(keys))}
 
 
 DB = DataBase()
