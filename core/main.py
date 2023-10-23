@@ -4,7 +4,7 @@ import sys
 import threading
 
 from aiogram import Bot, Dispatcher
-from aiogram.types import Message
+from aiogram.types import Message, BufferedInputFile
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command, CommandObject
 from aiogram.enums import ParseMode
@@ -16,6 +16,7 @@ from handler.service import bl_set, bl_help, bl_start
 from handler.req import bl_req, bl_mlt_req
 from handler.cache_req import new_cache_req, get_cache_req
 from handler.cache_path import cache_path, num_path, refr_sched
+from handler.config_json import get_json
 
 logging.basicConfig(level=logging.INFO)
 
@@ -84,6 +85,12 @@ async def cache(message: Message, command: CommandObject):
 async def get_cache(message: Message, command: CommandObject):
     ans = await get_cache_req(message.from_user.id, command.args)
     await message.answer(ans, parse_mode=ParseMode.MARKDOWN_V2)
+
+
+@dp.message(Command("json"))
+async def get_cache(message: Message, command: CommandObject):
+    json: str = await get_json(message.from_user.id)
+    await message.reply_document(BufferedInputFile(json.encode(), filename="config.json"), caption="config.json")
 
 
 async def bot_start(bot) -> None:
