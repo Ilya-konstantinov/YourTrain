@@ -1,9 +1,9 @@
 from typing import Tuple
 
 from mysql.connector import connect
-from core.data.config import DB_DATA, DB_DEFAULT
+from data.config import DB_DATA, DB_DEFAULT
 from datetime import datetime, timedelta
-from core.model.path import Station, Path
+from model.path import Station, Path
 import json
 
 

@@ -1,4 +1,4 @@
-from core.database.dataframe import DB
+from database.dataframe import DB
 import json
 
 

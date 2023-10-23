@@ -1,8 +1,8 @@
 from datetime import datetime
-from core.data.answer_enums import BAD_REQEST
-from core.database.dataframe import DB
-from core.model.arg_format import time_arg, filter_arg, sort_arg
-from core.model import model
+from data.answer_enums import BAD_REQEST
+from database.dataframe import DB
+from model.arg_format import time_arg, filter_arg, sort_arg
+from model import model
 
 
 async def bl_mlt_req(user_id: int, args: str, raw_ans: bool = False):

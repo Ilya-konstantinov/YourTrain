@@ -1,8 +1,8 @@
-from core.database.dataframe import DB
-from core.handler.req import single_req_parse, multi_req_parse, mlt_ans, singe_ans
-from core.data.answer_enums import CACHE_REQ
-from core.model.arg_format import cor_name
-from core.model.model import get_station
+from database.dataframe import DB
+from handler.req import single_req_parse, multi_req_parse, mlt_ans, singe_ans
+from data.answer_enums import CACHE_REQ
+from model.arg_format import cor_name
+from model.model import get_station
 
 
 async def new_cache_req(user_id: int, args: str):

@@ -1,6 +1,6 @@
-from core.data.answer_enums import HELP, SET
-from core.database.dataframe import DB
-from core.model.arg_format import param_arg, param_var, type_interp, cor_name, sort_dict
+from data.answer_enums import HELP, SET
+from database.dataframe import DB
+from model.arg_format import param_arg, param_var, type_interp, cor_name, sort_dict
 
 
 async def bl_start(user_id: int, user_exists: bool):

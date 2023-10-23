@@ -1,4 +1,4 @@
-from core.data.config import filter_dict, sort_dict, type_interp
+from data.config import filter_dict, sort_dict, type_interp
 
 
 # станции -> сортировка -> фильтрация -> количество

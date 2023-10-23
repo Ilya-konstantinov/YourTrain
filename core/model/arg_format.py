@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
-from core.data.answer_enums import BAD_REQEST
-from core.data.config import filter_dict, sort_dict, type_interp
+from data.answer_enums import BAD_REQEST
+from data.config import filter_dict, sort_dict, type_interp
 import re
 
 
