@@ -49,7 +49,7 @@ async def num_path(user_id: int, args: str) -> str:
 
 def refresh_whole_path(bot):
     aioschedule.clear()
-    paths = DB.get_whole_cache_path()
+    paths = DB.get_whole_cache_path
     for path in paths:
         dep_time = get_whole_path(path['path_id'])[path['dep_st']][0]
         params = {
