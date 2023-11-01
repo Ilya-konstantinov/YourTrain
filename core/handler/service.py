@@ -1,4 +1,4 @@
-from data.answer_enums import HELP, SET
+from data.answer_enums import HELP, SET, COMMENT, DEL_INFO, RECACHE
 from database.dataframe import DB
 from model.arg_format import param_arg, param_var, type_interp, cor_name, sort_dict
 
@@ -53,3 +53,40 @@ async def bl_set(user_id: int, args: str):
     DB.set_params(uid=user_id, param_val=val, param_key=column_name)
 
     return SET.SUCCESS_F.format(args[0], args[1])
+
+
+async def bl_del_user_info(uid: int, name: str) -> str:
+    """
+    Удаляет информацию о пользователе.
+
+    :param name: Имя пользователя.
+    :param uid: Уникальный id пользователя.
+    :return: Возвращает сообщение SUCCESS в случае успеха, UNSUCCESSFUL иначе.
+    """
+
+    is_suc = DB.del_info(uid, name)
+    return DEL_INFO.SUCCESS if is_suc else DEL_INFO.UNSUCCESSFUL
+
+
+def bl_comment_get_args(args: str) -> str | tuple[bool, str]:
+    """
+    Обрабатывает аргументы запроса на отзыв.
+
+    :param args: Анонимен запрос или нет, на русском или bool.
+    :return: Сообщение об ошибки если что-то пошло не так, или tuple[is_anon, ans] иначе.
+    """
+    args = args.strip()
+    if args not in ['0', '1', "анонимно", "не анонимно"]:
+        return COMMENT.UNSUCCESSFUL
+
+    return args in ['1', 'анонимно'], COMMENT.GET_ARGS
+
+
+async def bl_recache_user(uid: int, name: str) -> str:
+    try:
+        DB.recache_user(uid, name)
+    except:
+        return RECACHE.USER_ERROR
+
+    return RECACHE.USER_SUCCESS
+

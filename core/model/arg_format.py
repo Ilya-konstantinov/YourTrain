@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from data.answer_enums import BAD_REQEST
+from data.answer_enums import BAD_REQUEST
 from data.config import filter_dict, sort_dict, type_interp
 import re
 
@@ -27,9 +27,9 @@ def time_arg(time: str) -> str | datetime:
             tmp_time = datetime.strptime(time, "%H:%M")
             dep_time = dep_time.replace(hour=tmp_time.hour, minute=tmp_time.minute)
         else:
-            return BAD_REQEST.BAD_TIME
+            return BAD_REQUEST.BAD_TIME
     except:
-        return BAD_REQEST.BAD_TIME
+        return BAD_REQUEST.BAD_TIME
 
     return dep_time
 
@@ -39,7 +39,7 @@ def filter_arg(filter_type: str) -> int | str:
         if filter_type in tp:
             return filter_dict[tp]
 
-    return BAD_REQEST.BAD_FILTER
+    return BAD_REQUEST.BAD_FILTER
 
 
 def sort_arg(sort_type: str) -> int | str:
@@ -47,7 +47,7 @@ def sort_arg(sort_type: str) -> int | str:
         if sort_type in tp:
             return sort_dict[tp]
 
-    return BAD_REQEST.BAD_SORT
+    return BAD_REQUEST.BAD_SORT
 
 
 def param_arg(param: str) -> str:
@@ -69,6 +69,14 @@ def param_var(var: str) -> int:
 
     return var
 
+
+def col_arg(col: str):
+    try:
+        col = int(col)
+        assert 3 <= col <= 20
+    except:
+        return BAD_REQUEST.BAD_COL
+    return col
 
 def cor_name(name: str) -> bool:
     return re.fullmatch(r'[A-z_А-я0-9]+', name)

@@ -6,6 +6,14 @@ from model.model import get_station
 
 
 async def new_cache_req(user_id: int, args: str):
+    """
+    Создание нового сохранённого запроса.
+
+    :param user_id: Уникальный id пользователя.
+    :param args: Параметры в формате (name[, sort_type[, filter_type[, col]]])
+    :return: Возвращает SUCCESS если путь создан успешно, 
+        сообщение об ошибке в ином случае
+    """
     filter_type, sort_type, col = DB.user_params(uid=user_id)[1:]
     is_mlt: bool = False
 
@@ -42,7 +50,14 @@ async def new_cache_req(user_id: int, args: str):
     return CACHE_REQ.SUCCESS
 
 
-async def get_cache_req(user_id: int, args: str):
+async def get_cache_req(user_id: int, args: str) -> str:
+    """
+    Возвращает ответ на сохранённый запрос.
+
+    :param user_id: Уникальный id пользователя.
+    :param args: Идентификация пути для пользователя (name/number).
+    :return: Возвращает пути или значение ошибки.
+    """
     if not cor_name(args):
         return CACHE_REQ.BAD_NAME
 

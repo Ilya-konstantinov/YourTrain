@@ -14,6 +14,13 @@ user_cache_path: dict[int, list] = {}
 
 
 async def cache_path(user_id: int, args: str) -> str:
+    """
+    Дать пользователю выбор маршрута из запроса с данными параметра.
+
+    :param user_id: Уникальный id пользователя
+    :param args: Параметры запроса [sort_type[, filter_type[, col[, dep_time]]]]
+    :return: Возвращает текст запроса если он выполнен, текст ошибки иначе.
+    """
     f = bl_req if args.find('--') == -1 else bl_mlt_req
 
     ans = await f(user_id=user_id, args=args, raw_ans=True)
@@ -22,7 +29,13 @@ async def cache_path(user_id: int, args: str) -> str:
     return ans_format(ans)
 
 
-def del_cache(uid: int):
+def del_cache(uid: int) -> None:
+    """
+    Удаляет запрос, если пользователь забыл его выбрать.
+
+    :param uid: Уникальный id пользователя
+    :return: None
+    """
     if uid in user_cache_path.keys():
         user_cache_path.pop(uid)
 
