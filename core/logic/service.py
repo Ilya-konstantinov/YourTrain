@@ -1,10 +1,13 @@
 from data.answer_enums import HELP, SET, COMMENT, DEL_INFO, RECACHE
-from database.dataframe import DB
+from database.db_del import DBDel
+from database.db_recache import DBRecache
+from database.db_user import DBUser
+from database.db_cache_req import DBCacheReq
 from model.arg_format import param_arg, param_var, type_interp, cor_name, sort_dict
 
 
 async def bl_start(user_id: int, user_exists: bool):
-    user_name = DB.user_params(user_id)[0]
+    user_name = DBUser.user_params(user_id)[0]
     if user_exists:
         return HELP.START_OLD_F.format(user_name)
     else:
@@ -12,7 +15,7 @@ async def bl_start(user_id: int, user_exists: bool):
 
 
 async def bl_help(user_id: int, args: str):
-    user_name = DB.user_params(user_id)[0]
+    user_name = DBUser.user_params(user_id)[0]
     match args:
         case None:
             return HELP.BASE_F.format(user_name)
@@ -35,7 +38,7 @@ async def bl_set(user_id: int, args: str):
     if column_name not in type_interp.values():
         return column_name
 
-    val: str = param_var(args[1])
+    val: str | int = param_var(args[1])
 
     if column_name == "name":
         if not cor_name(val):
@@ -50,7 +53,7 @@ async def bl_set(user_id: int, args: str):
     else:
         if val not in sort_dict.values():
             return SET.BAD_VAR
-    DB.set_params(uid=user_id, param_val=val, param_key=column_name)
+    DBUser.set_params(uid=user_id, param_val=val, param_key=column_name)
 
     return SET.SUCCESS_F.format(args[0], args[1])
 
@@ -64,7 +67,7 @@ async def bl_del_user_info(uid: int, name: str) -> str:
     :return: Возвращает сообщение SUCCESS в случае успеха, UNSUCCESSFUL иначе.
     """
 
-    is_suc = DB.del_info(uid, name)
+    is_suc = DBDel.del_info(uid, name)
     return DEL_INFO.SUCCESS if is_suc else DEL_INFO.UNSUCCESSFUL
 
 
@@ -84,9 +87,13 @@ def bl_comment_get_args(args: str) -> str | tuple[bool, str]:
 
 async def bl_recache_user(uid: int, name: str) -> str:
     try:
-        DB.recache_user(uid, name)
+        DBRecache.recache_user(uid, name)
     except:
         return RECACHE.USER_ERROR
 
     return RECACHE.USER_SUCCESS
 
+
+def bl_get_nearest_cache_req(uid: int) -> list[str]:
+    reqs = DBCacheReq.get_nearest(uid)
+    return [req.name for req in reqs]

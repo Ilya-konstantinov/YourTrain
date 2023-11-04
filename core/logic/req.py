@@ -1,7 +1,8 @@
-from datetime import datetime
 from data.answer_enums import BAD_REQUEST
-from database.dataframe import DB
-from model.arg_format import time_arg, filter_arg, sort_arg, col_arg
+from database.db_cache_req import DBCacheReq
+from database.db_station import DBStation
+from database.db_user import DBUser
+from model.arg_format import time_arg, filter_arg, sort_arg, col_arg, cor_time
 from model import model
 
 
@@ -36,7 +37,7 @@ async def bl_req(user_id: int, args: str, raw_ans: bool = False):
 
 def mlt_ans(st_from, st_to, dep_time, sort_type, filter_type, col, raw_ans):
     req: list[model.Path] = []
-
+    dep_time = time_arg(dep_time)
     for fr in st_from:
         for to in st_to:
             req += model.req(station_from=fr, station_to=to, sort_type=sort_type, dep_time=dep_time,
@@ -57,6 +58,7 @@ def mlt_ans(st_from, st_to, dep_time, sort_type, filter_type, col, raw_ans):
 
 
 def singe_ans(st1, st2, dep_time, sort_type, filter_type, col, raw_ans):
+    dep_time = time_arg(dep_time)
     req: list = model.req(station_from=st1, station_to=st2, dep_time=dep_time, sort_type=sort_type,
                           filter_type=filter_type, col=col)
 
@@ -89,8 +91,8 @@ def single_req_parse(uid: int, args: str) -> str | tuple:
     try:
         int(st1)
         int(st2)
-        assert len(st1) == len(st2) == st2
-        st1, st2 = DB.station_by_id(int(st1)), DB.station_by_id(int(st2))
+        assert len(st1) == len(st2) == 7
+        st1, st2 = DBStation.station_by_id(int(st1)).title, DBStation.station_by_id(int(st2)).title
     except:
         ...
     cor_args = args_parse(uid, args[2:])
@@ -117,8 +119,8 @@ def multi_req_parse(uid: int, args: str):
         for st in st_to:
             int(st)
             assert len(st) == 7
-        st_from = [DB.station_by_id(int(st)) for st in st_from]
-        st_to = [DB.station_by_id(int(st)) for st in st_to]
+        st_from = [DBStation.station_by_id(int(st)) for st in st_from]
+        st_to = [DBStation.station_by_id(int(st)) for st in st_to]
     except:
         ...
 
@@ -143,17 +145,16 @@ def multi_req_parse(uid: int, args: str):
 
 
 def args_parse(user_id, *args) -> str | tuple:
-    sort_type, filter_type, col = DB.user_params(user_id)[1:]
-    dep_time: datetime = datetime.now()
+    sort_type, filter_type, col = DBUser.user_params(user_id)[1:]
+    dep_time: str | None = None
     args = args[0]
 
     if len(args) > 0 and args[0] != '-':
-        time = args[0]
-        tmp_time = time_arg(time=time)
-        if isinstance(tmp_time, str):
-            return tmp_time
-
-        dep_time = tmp_time
+        time: str = args[0]
+        time: str = cor_time(time)
+        if isinstance(time, str):
+            return time
+        dep_time = args[0]
 
     if len(args) > 1 and args[1] != '-':
         tmp_sort = sort_arg(args[1])
@@ -178,7 +179,9 @@ def args_parse(user_id, *args) -> str | tuple:
 
 
 async def bl_all_req(uid: int) -> str:
-    reqs = DB.cache_req_whole_get(uid)
+    reqs = DBCacheReq.cache_req_whole_get(uid)
+    if not reqs:
+        return "Похоже, у вас нет сохранённых запросов"
     ans = f'`{"-"*30}`\n'.join([
         '```\n'+req.get_view()+'```' for req in reqs
     ])

@@ -10,16 +10,18 @@ def get_path(dep_st: Station, arr_st: Station, dep_time: datetime = datetime.now
 
     cur_list = list()
 
+    if dep_time is None:
+        dep_time = datetime.now()
+
     for path in raw_json:
+
         if dep_time > raw_req.str_to_time(path["departureTime"]):
             continue
+
         is_speed: bool = not path["trainCategoryId"] == 4
-        if is_speed and filter_type == 2:
-            continue
 
-        if not is_speed and filter_type == 1:
+        if (is_speed and filter_type == 2) or (not is_speed and filter_type == 1):
             continue
-
 
         cur_list.append(
             Path(
@@ -41,9 +43,12 @@ def get_path(dep_st: Station, arr_st: Station, dep_time: datetime = datetime.now
 
 
 def req(station_from: str, station_to: str, sort_type: int = 1, dep_time: datetime = datetime.now(),
-        filter_type: int = 1, col: int = 10) -> list:
+        filter_type: int = 1, col: int = 10) -> list[Path]:
     if col <= 0:
         return []
+    if isinstance(station_from, Station) and isinstance(station_to, Station):
+        return get_path(dep_st=station_from, arr_st=station_to, dep_time=dep_time, sort_type=sort_type,
+                        filter_type=filter_type, col=col)
     return get_path(get_station(station_from), get_station(station_to), dep_time=dep_time, sort_type=sort_type,
                     filter_type=filter_type, col=col)
 

@@ -1,5 +1,6 @@
 from aiogram.utils.keyboard import ReplyKeyboardMarkup
 from aiogram.types import KeyboardButton
+from data.config import sort_ind_to_rus, filter_ind_to_rus
 
 
 def stations() -> ReplyKeyboardMarkup:
@@ -12,6 +13,8 @@ def stations() -> ReplyKeyboardMarkup:
 
 
 def args(dep_time, sort_type, filter_type, col) -> ReplyKeyboardMarkup:
+    if dep_time is None:
+        dep_time = "Сейчас"
     kb = ReplyKeyboardMarkup(
         keyboard=[
             [
@@ -19,8 +22,8 @@ def args(dep_time, sort_type, filter_type, col) -> ReplyKeyboardMarkup:
                 KeyboardButton(text=f'Количество электричек: {col}')
             ],
             [
-                KeyboardButton(text=f'Тип сортировки: {sort_type}'),
-                KeyboardButton(text=f'Тип фильтрации: {filter_type}')
+                KeyboardButton(text=f'Тип сортировки: {sort_ind_to_rus[sort_type]}'),
+                KeyboardButton(text=f'Тип фильтрации: {filter_ind_to_rus[filter_type]}')
             ],
             [
                 KeyboardButton(text="Отмена"),

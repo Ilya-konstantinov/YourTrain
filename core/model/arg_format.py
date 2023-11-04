@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from data.answer_enums import BAD_REQUEST
+from data.answer_enums import BAD_REQUEST, SET
 from data.config import filter_dict, sort_dict, type_interp
 import re
 
@@ -7,10 +7,10 @@ import re
 def time_arg(time: str) -> str | datetime:
     dep_time = datetime.now()
     try:
-        if re.fullmatch(r'[+\-]\d+', time):  # For +del time
-            dep_time += timedelta(minutes=int(time))
-        elif time == '0':  # For no time changes
+        if time == '0' or time == '-' or time is None:  # For no time changes
             ...
+        elif re.fullmatch(r'[+\-]\d+', time):  # For +del time
+            dep_time += timedelta(minutes=int(time))
         elif re.fullmatch(r'[0-3]?[0-9]\.[0-1]?[0-9]', time):  # For DD.MM time, like 28.02
             dep_time = datetime.strptime(time, "%d.%m")
             dep_time = dep_time.replace(year=datetime.now().year)
@@ -32,6 +32,33 @@ def time_arg(time: str) -> str | datetime:
         return BAD_REQUEST.BAD_TIME
 
     return dep_time
+
+
+def cor_time(time: str | None) -> bool | str:
+    try:
+        if re.fullmatch(r'[+\-]\d+', time):  # For +del time
+            timedelta(minutes=int(time))
+        elif time == '0' or time == '-' or time is None:  # For no time changes
+            ...
+        elif re.fullmatch(r'[0-3]?[0-9]\.[0-1]?[0-9]', time):  # For DD.MM time, like 28.02
+            datetime.strptime(time, "%d.%m")
+        elif re.fullmatch(r'[0-3]?[0-9]\.[0-1]?[0-9]\.[0-9][0-9]', time):  # For DD.MM.YY time, like 14.11.06
+            dep_time = datetime.strptime(time, "%d.%m.%y")
+        elif re.fullmatch(r'[0-3]?[0-9]\.[0-1]?[0-9]\.20[0-2][0-9]', time):  # For DD.MM.YY time, like 14.11.2006
+            datetime.strptime(time, "%d.%m.%Y")
+        elif re.fullmatch(r'[0-3]?[0-9]\.[0-1]?[0-9]\.[0-9][0-9]-[0-2]?[0-9]:[0-5][0-9]', time):  # For dd.mm.yy-HH:MM
+            datetime.strptime(time, "%d.%m.%y-%H.%M")
+        elif re.fullmatch(r'[0-3]?[0-9]\.[0-1]?[0-9]\.20[0-2][0-9]-[0-2]?[0-9]:[0-5][0-9]',
+                          time):  # For dd.mm.YYYY-HH:MM
+            datetime.strptime(time, "%d.%m.%Y-%H.%M")
+        elif re.fullmatch(r'[0-2]?[0-9]:[0-5][0-9]', time):  # For HH:MM time, like 4:20
+            datetime.strptime(time, "%H:%M")
+        else:
+            return BAD_REQUEST.BAD_TIME
+    except:
+        return BAD_REQUEST.BAD_TIME
+
+    return True
 
 
 def filter_arg(filter_type: str) -> int | str:
@@ -58,7 +85,7 @@ def param_arg(param: str) -> str:
     return SET.BAD_PARAM
 
 
-def param_var(var: str) -> int:
+def param_var(var: str) -> int | str:
     for tp in sort_dict:
         if var in tp:
             return sort_dict[tp]
@@ -78,5 +105,6 @@ def col_arg(col: str):
         return BAD_REQUEST.BAD_COL
     return col
 
+
 def cor_name(name: str) -> bool:
-    return re.fullmatch(r'[A-z_А-я0-9]+', name)
+    return re.fullmatch(r'[A-z_А-я0-9]+', name) is not None

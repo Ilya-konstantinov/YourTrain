@@ -1,7 +1,7 @@
 {
     "sort_type" : [
-        "departure_time", 
-        "arrival_time", 
+        "dep_time",
+        "arr_time",
         "path_time"
     ], 
     "train_type" : [

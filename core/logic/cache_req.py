@@ -1,8 +1,9 @@
-from database.dataframe import DB
-from handler.req import single_req_parse, multi_req_parse, mlt_ans, singe_ans
+from database.db_cache_req import DBCacheReq
+from logic.req import single_req_parse, multi_req_parse, mlt_ans, singe_ans
 from data.answer_enums import CACHE_REQ
-from model.arg_format import cor_name
+from model.arg_format import cor_name, time_arg
 from model.model import get_station
+from model.path import CacheRequest
 
 
 async def new_cache_req(user_id: int, args: str):
@@ -10,12 +11,10 @@ async def new_cache_req(user_id: int, args: str):
     Создание нового сохранённого запроса.
 
     :param user_id: Уникальный id пользователя.
-    :param args: Параметры в формате (name[, sort_type[, filter_type[, col]]])
+    :param args: Параметры в формате (name, st_from, st_to[, sort_type[, filter_type[, col]]])
     :return: Возвращает SUCCESS если путь создан успешно, 
         сообщение об ошибке в ином случае
     """
-    filter_type, sort_type, col = DB.user_params(uid=user_id)[1:]
-    is_mlt: bool = False
 
     is_mlt = args.find('--') != -1
     name = args.split()[0]
@@ -34,18 +33,14 @@ async def new_cache_req(user_id: int, args: str):
         st_to = [get_station(i) for i in st_to]
         st_from = [get_station(i) for i in st_from]
 
-    for st in st_to:
-        if not DB.station_exists(st):
-            DB.station_create(st)
-
-    for st in st_from:
-        if not DB.station_exists(st):
-            DB.station_create(st)
-
-    DB.cache_req_create(user_id, name=name, is_mlt=is_mlt,
-                        sort_type=sort_type, filter_type=filter_type,
-                        col=col, dep_time=dep_time,
-                        dep_st_id=[st.id for st in st_from], arr_st_id=[st.id for st in st_to])
+    if not DBCacheReq.cache_req_create(
+        CacheRequest(
+            dep_st=st_from, arr_st=st_to,
+            dep_time=dep_time, filter_type=filter_type, sort_type=sort_type, col=col,
+            is_mlt=is_mlt, id=user_id, name=name
+        )
+    ):
+        return CACHE_REQ.UNSUCCESS
 
     return CACHE_REQ.SUCCESS
 
@@ -61,15 +56,15 @@ async def get_cache_req(user_id: int, args: str) -> str:
     if not cor_name(args):
         return CACHE_REQ.BAD_NAME
 
-    args = DB.cache_req_get(user_id, args)
+    args = DBCacheReq.cache_req_get(user_id, args)
 
     if not args:
         return CACHE_REQ.BAD_NAME
-
-    stations, args, is_mlt = args
-
+    args.dep_time = time_arg(args.dep_time)
+    stations, args, is_mlt = (args.dep_st, args.arr_st), (args.dep_time, args.sort_type, args.filter_type, args.col), args.is_mlt
+# st_from, st_to, dep_time, sort_type, filter_type, col, raw_ans
     if is_mlt:
-        return mlt_ans(*stations, *args)
+        return mlt_ans(*stations, *args, raw_ans=False)
     else:
-        return singe_ans(*stations, *args)
+        return singe_ans(*(stations[0][0], stations[1][0]), *args, raw_ans=False)
 

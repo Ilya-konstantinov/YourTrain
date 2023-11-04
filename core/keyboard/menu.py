@@ -1,13 +1,11 @@
-from aiogram.utils.keyboard import (ReplyKeyboardMarkup,
-                                    InlineKeyboardMarkup, InlineKeyboardBuilder, InlineKeyboardButton)
+from aiogram.utils.keyboard import (ReplyKeyboardMarkup, ReplyKeyboardBuilder)
 from aiogram.types import KeyboardButton
 from model.path import CacheRequest
-from callback.req import ReqCallbackFactory
 
 
-def menu() -> ReplyKeyboardMarkup:
-    builder = ReplyKeyboardMarkup(
-        keyboard=[
+def menu(*args) -> ReplyKeyboardMarkup:
+    builder = ReplyKeyboardBuilder(
+        [
             [
                 KeyboardButton(text="Запрос"),
                 KeyboardButton(text="Отзыв")
@@ -16,8 +14,20 @@ def menu() -> ReplyKeyboardMarkup:
                 KeyboardButton(text="Сохранённые запросы")
             ]
         ],
-        resize_keyboard=True,
-        is_persistent=True
     )
-    return builder
 
+    for el in args:
+        if isinstance(el, str):
+            builder.button(
+                text=el
+            )
+        if isinstance(el, CacheRequest):
+            builder.button(
+                text=el.name
+            )
+
+    kb = builder.as_markup()
+    kb.resize_keyboard = True
+    kb.is_persistent = True
+
+    return kb

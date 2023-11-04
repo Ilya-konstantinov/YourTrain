@@ -25,3 +25,6 @@ class Request(StatesGroup):
     get_time = State()
     get_filter = State()
     get_col = State()
+
+class CacheRequest(StatesGroup):
+    get_name = State()
