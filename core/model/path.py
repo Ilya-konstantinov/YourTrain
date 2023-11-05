@@ -123,8 +123,8 @@ class CacheRequest:
     name: str | None
     user_id: int | None
 
-    def __init__(self, dep_st: list[Station], arr_st: list[Station], dep_time: str, sort_type: int,
-                 filter_type: int, col: int, is_mlt: bool, user_id: int = None, name: str = None):
+    def __init__(self, dep_st: list[Station], arr_st: list[Station], dep_time: str = '0', sort_type: int = 0,
+                 filter_type: int = 0, col: int = 5, is_mlt: bool = 0, user_id: int = None, name: str = None):
         """
         Создание класса сохранённого запроса.
 
@@ -148,6 +148,9 @@ class CacheRequest:
         self.sort_type, self.filter_type, self.col, self.is_mlt = sort_type, filter_type, col, is_mlt
         self.user_id, self.name = user_id, name
 
+        if len(dep_st) > 1 or len(arr_st) > 1:
+            self.is_mlt = 1
+
     def get_view(self) -> str:
         """
         Отображение сохранённого запроса.
@@ -160,7 +163,7 @@ class CacheRequest:
         ans = [title, st_from, dd, st_to, dd]
 
         dep_s = self.dep_time
-        if dep_s is None:
+        if dep_s in [None, '-', 0, '0']:
             dep_s = 'Любое'
 
         column_names = f'От{" " * 3}|Сортировка|Фильтр{" " * 4}|Кл'
