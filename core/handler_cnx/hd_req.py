@@ -1,17 +1,19 @@
-from datetime import datetime
-
 from aiogram import Dispatcher, F
 from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandObject
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
+import model.model
 from FSMachines import MStates
 from callback.req import ReqCallbackFactory
+from database.db_cache_req import DBCacheReq
+from database.db_station import DBStation
 from database.db_user import DBUser
 from logic.cache_path import cache_path
-from logic.req import bl_req, bl_mlt_req, check_station
-from keyboard import req_inline, req_args
+from logic.req import bl_req, bl_mlt_req, check_station, bl_parse_change
+from keyboard import req_inline, req_args, menu, settings_reply
+from model.path import CacheRequest, Station
 
 
 def hand(dp: Dispatcher):
@@ -68,6 +70,10 @@ def hand(dp: Dispatcher):
     async def button_req(message: Message, state: FSMContext):
         await state.clear()
         await state.set_state(MStates.Request.get_st_from)
+        await state.update_data(req=CacheRequest(None, None,'-',
+                                                 *DBUser.user_params(message.from_user.id)[1:],
+                                                 is_mlt=False, user_id=message.from_user.id),
+                                action='req')
         await message.answer(
             text="Введите станцию(ии) отправления",
             reply_markup=req_args.stations()
@@ -75,42 +81,112 @@ def hand(dp: Dispatcher):
 
     @dp.message(MStates.Request.get_st_from)
     @dp.message(MStates.Request.get_st_to)
-    async def button_req(message: Message, state: FSMContext):
+    async def button_st(message: Message, state: FSMContext):
         st: str = message.text.strip()
-        st = st if st.count(' ') == 0 else st.split()
-        if isinstance(st, str):
-            if check_station(st):
+        st: list[str | Station] = [st] if st.count(' ') == 0 else st.split()
+        req: CacheRequest = (await state.get_data())['req']
+        if len(st) != 1:
+            req.is_mlt = True
+            await state.update_data(req=req)
+        for ind, station in enumerate(st):
+            if check_station(station):
                 await state.clear()
                 await state.set_state(MStates.Menu.just_menu)
-                await message.answer(check_station(st))
-        else:
-            for station in st:
-                if check_station(station):
-                    await state.clear()
-                    await state.set_state(MStates.Menu.just_menu)
-                    await message.answer(check_station(station))
+                await message.answer(check_station(station),
+                                     reply_markup=menu.menu(*DBUser.user_params(message.from_user.id)[1:]))
+            if not DBStation.station_exists(
+                model.model.get_station(station)
+            ):
+                DBStation.station_create(model.model.get_station(station))
+
+            st[ind] = model.model.get_station(station)
+
         if (await state.get_state()) == MStates.Request.get_st_from:
-            await state.update_data(st_from=st)
-            if not isinstance(st, str):
-                await state.update_data(is_mlt=True)
+            req.dep_st = st
+            await state.update_data(req=req)
             await state.set_state(MStates.Request.get_st_to)
             await message.answer(
                 text="Введите станцию(ии) прибытия",
                 reply_markup=req_args.stations()
             )
         else:
-            await state.update_data(st_to=st)
-            if not isinstance(st, str):
-                await state.update_data(is_mlt=True)
-            dep_time = None
-            _, sort_type, filter_type, col = DBUser.user_params(message.from_user.id)
-            args = (dep_time, sort_type, filter_type, col)
+            req: CacheRequest = (await state.get_data())['req']
+            req.arr_st = st
+            await state.update_data(req=req)
             await state.set_state(MStates.Request.get_args)
-            await state.update_data(dep_time=dep_time,
-                                    sort_type=sort_type,
-                                    filter_type=filter_type,
-                                    col=col)
             await message.answer(
                 text="Введите станцию(ии) прибытия",
-                reply_markup=req_args.args(*args)
+                reply_markup=req_args.args(req)
             )
+
+
+
+    @dp.message(MStates.Request.get_args, F.text.contains("отправления"))
+    @dp.message(MStates.Request.get_args, F.text.contains("электричек"))
+    @dp.message(MStates.Request.get_args, F.text.contains("сортировки"))
+    @dp.message(MStates.Request.get_args, F.text.contains("фильтрации"))
+    async def req_get_args(message: Message, state: FSMContext):
+        await state.set_state(MStates.Request.change_args)
+        val_type: str = ""
+        if message.text.__contains__("электричек"):
+            val_type = "col"
+        elif message.text.__contains__("сортировки"):
+            val_type = "sort_type"
+        elif message.text.__contains__("фильтрации"):
+            val_type = "filter_type"
+        elif message.text.__contains__("отправления"):
+            val_type = "dep_time"
+        await state.update_data(val_type=val_type)
+        await message.answer("Укажите желаемое значение", reply_markup=settings_reply.def_val(val_type))
+
+    @dp.message(MStates.Request.change_args)
+    async def req_change_args(message: Message, state: FSMContext):
+        val_type = (await state.get_data())["val_type"]
+        ans = await bl_parse_change(val_type, message.text.lower())
+        req: CacheRequest = (await state.get_data())['req']
+        if isinstance(ans, str):
+            await message.answer(ans, reply_markup=req_args.args(req))
+            return
+        val_type, val = ans
+        req.__setattr__(val_type, val)
+        await state.update_data(req=req)
+        await state.set_state(MStates.Request.get_args)
+        await message.answer("Ваше значение успешно изменено",
+                             reply_markup=req_args.args(req))
+
+    @dp.message(MStates.Request.get_args, F.text.casefold() == "сделать запрос")
+    async def button_make_req(message: Message, state: FSMContext):
+        req: CacheRequest = (await state.get_data())['req']
+        # message.reply_markup
+        action = (await state.get_data())['action']
+        if action == 'cache':
+            DBCacheReq.cache_req_create(req)
+            await message.answer("Ваш запрос сохранён!",
+                                 reply_markup=menu.menu(*DBUser.user_params(message.from_user.id)[1:]))
+        elif action == "req":
+            f = bl_mlt_req if req.is_mlt else bl_req
+            ans = await f(message.from_user.id, req.get_params())
+
+            await message.answer(ans,
+                                 reply_markup=req_inline.req_inline(req.get_params()),
+                                 parse_mode=ParseMode.MARKDOWN_V2)
+            await message.answer("Меню",
+                                 reply_markup=menu.menu(*DBUser.user_params(message.from_user.id)[1:]),
+                                 parse_mode=ParseMode.MARKDOWN_V2)
+        elif action == "cache_path":
+            ans = await cache_path(message.from_user.id, req.get_params())
+
+            await message.answer(ans[0],
+                                 reply_markup=req_inline.req_inline(req.get_params()),
+                                 parse_mode=ParseMode.MARKDOWN_V2)
+            await message.answer("Выведите номер пути, который хотите добавить",
+                                 reply_markup=menu.menu(*DBUser.user_params(message.from_user.id)[1:]),
+                                 parse_mode=ParseMode.MARKDOWN_V2)
+
+            await state.clear()
+            await state.set_state(MStates.CachePath.get_path)
+            await state.update_data(paths=ans[1])
+            return
+
+        await state.clear()
+        await state.set_state(MStates.Menu.just_menu)

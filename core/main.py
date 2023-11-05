@@ -3,7 +3,7 @@ import asyncio
 import sys
 
 from aiogram import Bot, Dispatcher, F
-from aiogram.types import Message, ReplyKeyboardRemove
+from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command
 
@@ -11,7 +11,7 @@ from data.config import TOKEN
 from FSMachines import MStates
 from logic.cache_path import refr_sched
 from keyboard import menu
-from handler_cnx import hd_cache_path, hd_cache_req, hd_req, hd_settings, hd_service
+from handler_cnx import hd_cache_path, hd_cache_req, hd_req, hd_settings, hd_service, hd_end
 from logic.service import bl_get_nearest_cache_req
 
 logging.basicConfig(level=logging.INFO)
@@ -24,28 +24,8 @@ dp = Dispatcher()
 async def cmd_menu(message: Message, state: FSMContext):
     await state.set_state(MStates.Menu.just_menu)
     await message.answer(text="Вот твое меню ссаное", reply_markup=(menu.menu(
-        bl_get_nearest_cache_req(message.from_user.id)
+        *bl_get_nearest_cache_req(message.from_user.id)
     )))
-
-
-@dp.message(Command("cancel"))
-@dp.message(F.text.casefold() == "отмена")
-async def cancel_handler(message: Message, state: FSMContext) -> None:
-    """
-    Allow user to cancel any action
-    """
-    current_state = await state.get_state()
-    if current_state is None:
-        return
-
-    logging.info("Cancelling state %r", current_state)
-    await state.clear()
-    await message.answer(
-        "Cancelled.",
-        reply_markup=menu.menu(
-            bl_get_nearest_cache_req(message.from_user.id)
-        ),
-    )
 
 
 async def bot_start(bot) -> None:
@@ -60,6 +40,7 @@ async def main() -> None:
     hd_service.hand(dp)
     hd_settings.hand(dp)
     hd_cache_req.hand(dp)
+    hd_end.hand(dp)
 
     await asyncio.gather(bot_start(bot), refr_sched(bot))
 

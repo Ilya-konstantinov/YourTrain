@@ -89,16 +89,22 @@ class CachePath:
     user_id: int
     dep_st: Station
     arr_st: Station
-    dep_time: datetime
+    dep_time: timedelta
     only_updates: bool
 
-    def __init__(self, dep_st: Station, arr_st: Station, dep_time: datetime, only_updates: bool, path_id: int, user_id: int):
+    def __init__(self, dep_st: Station, arr_st: Station, dep_time: timedelta, path_id: int, user_id: int, only_updates: bool):
         self.dep_st, self.arr_st = dep_st, arr_st
         self.dep_time, self.only_updates = dep_time, only_updates
         self.path_id, self.user_id = path_id, user_id
 
     def get_view(self) -> str:
-        pass
+        dep_time = datetime.today().replace(hour=self.dep_time.seconds // 3600,
+                                            minute=(self.dep_time.seconds % 3600) // 60)
+        dep_time_f = f'Время отбытия: {beauty_time(dep_time)}'
+        dep_title = beauty_station(self.dep_st, 12)
+        arr_tile = beauty_station(self.arr_st, 12)
+        second_line = f'{dep_title:<12}{" " * 6}{arr_tile:>12}'
+        return '\n'.join([dep_time_f, second_line])
 
 
 class CacheRequest:
@@ -117,7 +123,7 @@ class CacheRequest:
     user_id: int | None
 
     def __init__(self, dep_st: list[Station], arr_st: list[Station], dep_time: str, sort_type: int,
-                 filter_type: int, col: int, is_mlt: bool, id: int = None, name: str = None):
+                 filter_type: int, col: int, is_mlt: bool, user_id: int = None, name: str = None):
         """
         Создание класса сохранённого запроса.
 
@@ -138,20 +144,20 @@ class CacheRequest:
             self.dep_time = datetime.today().replace(hour=dep_time.seconds // 3600, minute=(dep_time.seconds % 3600) // 60)
 
         self.sort_type, self.filter_type, self.col, self.is_mlt = sort_type, filter_type, col, is_mlt
-        self.user_id, self.name = id, name
+        self.user_id, self.name = user_id, name
 
     def get_view(self) -> str:
         title = f"{self.name:-^30}"
         dd = '-' * 30
         st_from = ', '.join([st.title.capitalize() for st in self.dep_st])
         st_to = ', '.join([st.title.capitalize() for st in self.arr_st])
-        ans = [title, st_from, dd, st_to]
+        ans = [title, st_from, dd, st_to, dd]
 
         dep_s = self.dep_time
         if dep_s is None:
             dep_s = 'Любое'
 
-        column_names = f'От{" " * 3}|Сортировка |Фильтр{" " * 4}|Кл'
+        column_names = f'От{" " * 3}|Сортировка|Фильтр{" " * 4}|Кл'
         line = f'{dep_s:<5}|{sort_ind_to_rus[self.sort_type]:<10}|{filter_ind_to_rus[self.filter_type]:<10}|{self.col:<2}'
         ans += [column_names, dd, line]
         return '\n'.join(ans)

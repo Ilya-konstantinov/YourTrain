@@ -37,7 +37,7 @@ async def new_cache_req(user_id: int, args: str):
         CacheRequest(
             dep_st=st_from, arr_st=st_to,
             dep_time=dep_time, filter_type=filter_type, sort_type=sort_type, col=col,
-            is_mlt=is_mlt, id=user_id, name=name
+            is_mlt=is_mlt, user_id=user_id, name=name
         )
     ):
         return CACHE_REQ.UNSUCCESS
@@ -60,7 +60,6 @@ async def get_cache_req(user_id: int, args: str) -> str:
 
     if not args:
         return CACHE_REQ.BAD_NAME
-    args.dep_time = time_arg(args.dep_time)
     stations, args, is_mlt = (args.dep_st, args.arr_st), (args.dep_time, args.sort_type, args.filter_type, args.col), args.is_mlt
 # st_from, st_to, dep_time, sort_type, filter_type, col, raw_ans
     if is_mlt:

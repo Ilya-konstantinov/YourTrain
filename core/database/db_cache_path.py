@@ -18,7 +18,6 @@ class _DBCachePath(DataBase):
         self.cur.execute(qer, params)
         return not (self.cur.fetchone() is None)
 
-    
     def cache_path_create(self, uid: int, path: CachePath):
         """
         Сохраняет маршрут пользователю.
@@ -27,6 +26,10 @@ class _DBCachePath(DataBase):
         :param path: Путь, который необходимо добавить.
         :return: Возвращает False, если станцию создать не удалось.
         """
+        if not DBStation.station_exists(path.dep_st):
+            DBStation.station_create(path.dep_st)
+        if not DBStation.station_exists(path.arr_st):
+            DBStation.station_create(path.arr_st)
 
         if self.path_exists(uid, path.path_id):
             return False
@@ -69,10 +72,15 @@ class _DBCachePath(DataBase):
         :return: Список в формате (Станция отправления, станция прибытия, время старое отправления).
         """
 
-        keys = ["dep_st", "arr_st", "dep_time", "only_updates", "path_id", "user_id"]
+        keys = ["dep_st", "arr_st", "dep_time", "path_id", "user_id", "only_updates"]
         qer = f"SELECT {', '.join(keys)} FROM path_cache;"
         self.cur.execute(qer)
-        values = self.cur.fetchall()
+        values = list(self.cur.fetchall())
+        for ind, val in enumerate(values):
+            val = list(val)
+            val[0] = DBStation.station_by_id(val[0])
+            val[1] = DBStation.station_by_id(val[1])
+            values[ind] = val
         return [CachePath(*val) for val in values]
 
     def get_one_cache_path(self, uid: int, pid: int) -> CachePath | bool:
@@ -86,7 +94,7 @@ class _DBCachePath(DataBase):
         if not self.path_exists(uid=uid, pid=pid):
             return False
 
-        keys = ["dep_st", "arr_st", "dep_time", "only_updates", "path_id", "user_id"]
+        keys = ["dep_st", "arr_st", "dep_time", "path_id", "user_id", "only_updates"]
         qer = f"SELECT {', '.join(keys)} FROM path_cache WHERE user_id = %s and path_id = %s LIMIT 1;"
         params = [uid, pid]
         self.cur.execute(qer, params)
@@ -106,7 +114,22 @@ class _DBCachePath(DataBase):
         params = [uid]
         self.cur.execute(qer, params)
         values = self.cur.fetchall()
+        for ind, val in enumerate(values):
+            val = list(val)
+            val[0] = DBStation.station_by_id(val[0])
+            val[1] = DBStation.station_by_id(val[1])
+            values[ind] = val
         return [CachePath(*val) for val in values]
+
+    def del_cache_path(self, uid: int, pid: int):
+        """
+        Удаляет путь pid у пользователя с id: uid
+        :param uid: Уникальный id пользователя
+        :param pid: Уникальный id пути
+        """
+        qer = "DELETE FROM path_cache WHERE user_id = %s and path_id = %s"
+        param = [uid, pid]
+        self.cur.execute(qer, param)
 
 
 DBCachePath = _DBCachePath()

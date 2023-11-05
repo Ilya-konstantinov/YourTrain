@@ -2,7 +2,7 @@ from data.answer_enums import BAD_REQUEST
 from database.db_cache_req import DBCacheReq
 from database.db_station import DBStation
 from database.db_user import DBUser
-from model.arg_format import time_arg, filter_arg, sort_arg, col_arg, cor_time
+from model.arg_format import time_arg, filter_arg, sort_arg, cor_col, cor_time, is_cor_arg, param_var
 from model import model
 
 
@@ -77,7 +77,7 @@ def singe_ans(st1, st2, dep_time, sort_type, filter_type, col, raw_ans):
 def ans_format(req):
     ans = '\n'.join(
         [
-            "```\n"+it.get_view()+"```" for it in req
+            "```\n" + it.get_view() + "```" for it in req
         ]
     )
     if len(req) != 4:
@@ -119,8 +119,8 @@ def multi_req_parse(uid: int, args: str):
         for st in st_to:
             int(st)
             assert len(st) == 7
-        st_from = [DBStation.station_by_id(int(st)) for st in st_from]
-        st_to = [DBStation.station_by_id(int(st)) for st in st_to]
+        st_from = [DBStation.station_by_id(int(st)).title for st in st_from]
+        st_to = [DBStation.station_by_id(int(st)).title for st in st_to]
     except:
         ...
 
@@ -155,6 +155,8 @@ def args_parse(user_id, *args) -> str | tuple:
         if isinstance(time, str):
             return time
         dep_time = args[0]
+        if dep_time in ['0', 0, '-', None]:
+            dep_time = None
 
     if len(args) > 1 and args[1] != '-':
         tmp_sort = sort_arg(args[1])
@@ -170,7 +172,7 @@ def args_parse(user_id, *args) -> str | tuple:
         filter_type = tmp_filter
 
     if len(args) > 3 and args[3] != '-':
-        tmp_col = col_arg(args[3])
+        tmp_col = cor_col(args[3])
         if isinstance(col, str):
             return col
         col = tmp_col
@@ -182,8 +184,8 @@ async def bl_all_req(uid: int) -> str:
     reqs = DBCacheReq.cache_req_whole_get(uid)
     if not reqs:
         return "Похоже, у вас нет сохранённых запросов"
-    ans = f'`{"-"*30}`\n'.join([
-        '```\n'+req.get_view()+'```' for req in reqs
+    ans = f'`{"-" * 30}`\n'.join([
+        '```\n' + req.get_view() + '```' for req in reqs
     ])
     return ans
 
@@ -193,3 +195,11 @@ def check_station(st: str) -> str | None:
         return BAD_REQUEST.BAD_STATION
 
     return None
+
+
+async def bl_parse_change(val_type: str, val: str) -> tuple[str, str] | str:
+    val = param_var(val)
+    if isinstance(is_cor_arg(val_type, val), str):
+        return is_cor_arg(val_type, val)
+    else:
+        return val_type, val

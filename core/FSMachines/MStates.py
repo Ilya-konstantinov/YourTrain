@@ -2,6 +2,7 @@ from aiogram.fsm.state import State, StatesGroup
 
 
 class CachePath(StatesGroup):
+    just_menu = State()
     get_path = State()
     num_path = State()
 
@@ -21,10 +22,21 @@ class Request(StatesGroup):
     get_args = State()
 
     # Arguments
-    get_sort = State()
-    get_time = State()
-    get_filter = State()
-    get_col = State()
+    change_args = State()
+
 
 class CacheRequest(StatesGroup):
+    get_name = State()
+
+
+class Settings(StatesGroup):
+    just_settings = State()
+    change_def = State()
+
+
+class CacheReq(StatesGroup):
+    change_args = State()
+    just_cache = State()
+    change = State()
+    change_cached = State()
     get_name = State()

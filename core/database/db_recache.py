@@ -1,13 +1,14 @@
 import json
 
 from data.config import DB_DEFAULT
+from database.db_station import DBStation
 from database.db_user import DBUser
 from database.dataframe import DataBase
 from model.path import CacheRequest, CachePath
 
 
 class _DBRecache(DataBase):
-    
+
     def recache_req(self, req: CacheRequest) -> bool:
         """
         Изменяет электричку с данными параметрами в БД.
@@ -15,7 +16,7 @@ class _DBRecache(DataBase):
         :returns: Возвращает True если за спрос сохранён и False если сохранить запрос не получилось
         """
         keys = ["dep_st_id", "arr_st_id", "dep_time", "sort_type", "filter_type", "col", "is_mlt"]
-        qer = f"UPDATE req_cache SET {[key + ' = %s' for key in keys]} WHERE uid = %s and name = %s;"
+        qer = f"UPDATE req_cache SET {[key + ' = %s' for key in keys]} WHERE user_id = %s and name = %s;"
 
         dep_st_id = json.dumps([st.id for st in req.dep_st])
         arr_st_id = json.dumps([st.id for st in req.arr_st])
@@ -30,24 +31,30 @@ class _DBRecache(DataBase):
         except:
             return False
 
-    
-    def recache_path(self, path: CachePath) -> bool:
+    def recache_path(self, path_old: CachePath, path_new: CachePath) -> bool:
         """
         Изменяет сохранённый путь с заданными значениями.
 
         :return: Возвращает True если запрос сохранён и False если сохранить запрос не получилось.
         """
-
-        keys = ["dep_st", "arr_st", "dep_time", "only_updates"]
-        qer = f"UPDATE path_cache SET {[key + ' = %s' for key in keys]} WHERE uid = %s and path = %s;"
-        param = [path.dep_st.id, path.arr_st.id, path.dep_time, path.only_updates, path.user_id, path.path_id]
+        if not DBStation.station_exists(path_new.dep_st):
+            DBStation.station_create(path_new.dep_st)
+        if not DBStation.station_exists(path_new.arr_st):
+            DBStation.station_create(path_new.arr_st)
+        if not DBStation.station_exists(path_old.dep_st):
+            DBStation.station_create(path_old.dep_st)
+        if not DBStation.station_exists(path_old.arr_st):
+            DBStation.station_create(path_old.arr_st)
+        keys = ["path_id", "dep_st", "arr_st", "dep_time", "only_updates"]
+        qer = f"UPDATE path_cache SET {', '.join([key + ' = %s' for key in keys])} WHERE user_id = %s and path_id = %s;"
+        param = [path_new.path_id, path_new.dep_st.id, path_new.arr_st.id, path_new.dep_time,
+                 path_new.only_updates, path_old.user_id, path_old.path_id]
         try:
             self.cur.execute(qer, param)
             return True
-        except:
+        except Exception as e:
             return False
 
-    
     def recache_user(self, uid: int, name: str) -> bool:
         """
         Изменяет настройки пользователя на стандартные или создаёт нового пользователя со стандартными настройками.

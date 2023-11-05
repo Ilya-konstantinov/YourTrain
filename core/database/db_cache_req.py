@@ -14,10 +14,14 @@ class _DBCacheReq(DataBase):
         :param identification: Опознавательный признак сохранённого запроса.
         :return: Возвращает True если запрос существует, иначе False.
         """
-        column_title = ('name' if isinstance(identification, str) else 'number')
+        column_title = ('name' if isinstance(identification, str) else 'id')
         qer = f"SELECT * FROM req_cache WHERE {column_title} = %s AND user_id = %s;"
         params = [identification, uid]
         self.cur.execute(qer, params)
+
+        if not (self.cur.fetchone() is None):
+            return True
+
         return not (self.cur.fetchone() is None)
 
     def cache_req_col(self, uid: int) -> int:
@@ -83,7 +87,7 @@ class _DBCacheReq(DataBase):
         if not self.cache_req_exists(uid, identification):
             return False
 
-        column_title = ('name' if isinstance(identification, str) else 'number')
+        column_title = ('name' if isinstance(identification, str) else 'id')
 
         keys = ["dep_st_id", "arr_st_id", "dep_time", "sort_type", "filter_type", "col", "is_mlt", "user_id", "name"]
         qer = (f"SELECT {', '.join(keys)} FROM req_cache "
@@ -135,14 +139,21 @@ class _DBCacheReq(DataBase):
 
     def get_nearest(self, uid: int) -> list[CacheRequest | None]:
         qer = "SELECT id FROM req_cache WHERE user_id = %s LIMIT 3;"
-        ans = [None]*3
+        ans: list[CacheRequest] = []
         params = [uid]
         self.cur.execute(qer, params)
         reqs = self.cur.fetchall()
-        for ind, req in enumerate(reqs):
-            ans[ind] = self.cache_req_get(uid, req[0])
+        for req in reqs:
+            ans.append(self.cache_req_get(uid, req[0]))
 
         return ans
+
+    def cache_req_del(self, req: CacheRequest) -> None:
+        uid, name = req.user_id, req.name
+        qer = "DELETE FROM req_cache WHERE user_id = %s and name = %s;"
+        params = [uid, name]
+        self.cur.execute(qer, params)
+        return
 
 
 def ind_format(identification: str) -> str | int:

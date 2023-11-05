@@ -3,7 +3,7 @@ from database.db_del import DBDel
 from database.db_recache import DBRecache
 from database.db_user import DBUser
 from database.db_cache_req import DBCacheReq
-from model.arg_format import param_arg, param_var, type_interp, cor_name, sort_dict
+from model.arg_format import param_arg, param_var, is_cor_arg
 
 
 async def bl_start(user_id: int, user_exists: bool):
@@ -33,29 +33,19 @@ async def bl_set(user_id: int, args: str):
 
     if len(args) != 2:
         return SET.BAD_COL
-
-    column_name = param_arg(args[0])
-    if column_name not in type_interp.values():
-        return column_name
-
     val: str | int = param_var(args[1])
+    column_name = param_arg(args[0])
 
-    if column_name == "name":
-        if not cor_name(val):
-            return SET.BAD_VAR
-    elif column_name == "col":
-        try:
-            val = int(val)
-            if not (1 <= int(val) <= 20):
-                return SET.BAD_VAR
-        except:
-            return SET.BAD_VAR
-    else:
-        if val not in sort_dict.values():
-            return SET.BAD_VAR
+    is_cor = is_cor_arg(column_name, val)
+
+    if isinstance(is_cor, str):
+        return is_cor
+
     DBUser.set_params(uid=user_id, param_val=val, param_key=column_name)
 
     return SET.SUCCESS_F.format(args[0], args[1])
+
+
 
 
 async def bl_del_user_info(uid: int, name: str) -> str:

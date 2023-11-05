@@ -8,11 +8,12 @@ def menu(*args) -> ReplyKeyboardMarkup:
         [
             [
                 KeyboardButton(text="Запрос"),
-                KeyboardButton(text="Отзыв")
+                KeyboardButton(text="Настройки")
             ],
             [
-                KeyboardButton(text="Сохранённые запросы")
-            ]
+                KeyboardButton(text="Сохранённые запросы"),
+                KeyboardButton(text="Сохранённые маршруты")
+            ],[]
         ],
     )
 
