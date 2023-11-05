@@ -1,9 +1,15 @@
-from aiogram.utils.keyboard import (ReplyKeyboardMarkup, ReplyKeyboardBuilder)
 from aiogram.types import KeyboardButton
+from aiogram.utils.keyboard import (ReplyKeyboardMarkup, ReplyKeyboardBuilder)
+
 from model.path import CacheRequest
 
 
 def menu(*args) -> ReplyKeyboardMarkup:
+    """
+    Генерация стандартного меню с сохранёнными запросами.
+    :param args: Сохранённые запросы, которые будут видны нижней сточкой клавиатуры.
+    :return: Reply клавиатура стандартного меню.
+    """
     builder = ReplyKeyboardBuilder(
         [
             [
@@ -13,7 +19,7 @@ def menu(*args) -> ReplyKeyboardMarkup:
             [
                 KeyboardButton(text="Сохранённые запросы"),
                 KeyboardButton(text="Сохранённые маршруты")
-            ],[]
+            ], []
         ],
     )
 

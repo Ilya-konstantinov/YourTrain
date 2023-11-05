@@ -1,10 +1,15 @@
-from aiogram.utils.keyboard import ReplyKeyboardMarkup
 from aiogram.types import KeyboardButton
+from aiogram.utils.keyboard import ReplyKeyboardMarkup
+
 from data.config import sort_ind_to_rus, filter_ind_to_rus
 from model.path import CacheRequest
 
 
 def stations() -> ReplyKeyboardMarkup:
+    """
+    Генерация Reply клавиатуры для станций.
+    :return:
+    """
     kk = ReplyKeyboardMarkup(
         keyboard=[[KeyboardButton(text="Отмена")]],
         resize_keyboard=True
@@ -14,6 +19,11 @@ def stations() -> ReplyKeyboardMarkup:
 
 
 def args(req: CacheRequest) -> ReplyKeyboardMarkup:
+    """
+    Генерация Reply клавиатуры с аргументами данного req для запроса.
+    :param req: Сохранённый запрос, у которого будут браться аргументы.
+    :return: Reply клавиатура с аргументами данного req
+    """
     dep_time, sort_type, filter_type = req.dep_time, req.sort_type, req.filter_type
     if req.dep_time in [0, '0', None, '-']:
         dep_time = "Сейчас"

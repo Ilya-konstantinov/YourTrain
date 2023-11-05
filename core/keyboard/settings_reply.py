@@ -1,5 +1,6 @@
-from aiogram.utils.keyboard import ReplyKeyboardMarkup
 from aiogram.types import KeyboardButton, ReplyKeyboardRemove
+from aiogram.utils.keyboard import ReplyKeyboardMarkup
+
 from data.config import sort_ind_to_rus, filter_ind_to_rus
 
 

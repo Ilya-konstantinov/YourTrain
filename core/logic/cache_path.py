@@ -1,5 +1,6 @@
-import datetime
 import asyncio
+import datetime
+from datetime import timedelta
 
 import aioschedule
 import schedule
@@ -7,14 +8,11 @@ import schedule
 from data.answer_enums import CACHE_PATH
 from database.db_cache_path import DBCachePath
 from database.db_recache import DBRecache
+from keyboard.cache_path import path_inline
 from logic.req import bl_req, bl_mlt_req, ans_format
 from model import model
 from model.path import CachePath, Path
 from model.raw_req import get_whole_path, date_to_delta
-from threading import Timer
-from datetime import timedelta
-from keyboard.cache_path import path_inline
-
 
 
 async def cache_path(user_id: int, args: str) -> str | tuple:
@@ -33,7 +31,11 @@ async def cache_path(user_id: int, args: str) -> str | tuple:
     return ans_format(ans), ans
 
 
-def refresh_whole_path(bot):
+def refresh_whole_path(bot) -> None:
+    """
+    Распределяет все запросы в расписание отправки сообщений.
+    :param bot: Бот, от лица которого будут засылаться ответы.
+    """
     aioschedule.clear()
     paths: list[CachePath] = DBCachePath.get_whole_cache_path()
     for path in paths:
@@ -46,6 +48,11 @@ def refresh_whole_path(bot):
 
 
 async def refresh_path(bot, path_old: CachePath):
+    """
+    Обновление пути и отправка пользователю сообщения о прибытие данного поезда.
+    :param bot: Бот, от лица которого будут засылаться ответы.
+    :param path_old: Путь, который необходимо обработать
+    """
     path_new = get_whole_path(path_old.path_id)
     if path_new is None:
         path_old = await recache_path(path_old)
@@ -77,6 +84,11 @@ async def refresh_path(bot, path_old: CachePath):
 
 
 async def recache_path(path_old) -> CachePath:
+    """
+    Полное обновление пути на случай изменение его в **API**.
+    :param path_old: Старая версия пути.
+    :return: Новый путь.
+    """
     dep_st = path_old.dep_st
     arr_st = path_old.arr_st
     dep_time: datetime = path_old.dep_time
@@ -97,6 +109,10 @@ async def recache_path(path_old) -> CachePath:
 
 
 async def refr_sched(bot) -> None:
+    """
+    Установка времени распределения расписания и "ловля" процессов расписания.
+    :param bot: Бот, от лица которого будут засылаться ответы.
+    """
     # schedule.every().day.at("02:00").do(refresh_whole_path, bot=bot)
     schedule.every(10).seconds.do(refresh_whole_path, bot=bot)
     while True:
@@ -104,7 +120,13 @@ async def refr_sched(bot) -> None:
         await aioschedule.run_pending()
         await asyncio.sleep(1)
 
+
 def bl_path_view(uid: int) -> str:
+    """
+    Запрос на отображение всех сохранённых маршрутов.
+    :param uid: Уникальный id пользователя.
+    :return: Отображение всех сохранённых маршрутов пользователя в формате MARKDOWN_2.
+    """
     paths = DBCachePath.get_users_cache_path(uid)
     return f'`{"-" * 30}`\n'.join([
         f'```\n{path.get_view()}\n```' for path in paths

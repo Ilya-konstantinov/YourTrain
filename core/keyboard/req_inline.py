@@ -5,6 +5,11 @@ from callback.req import ReqCallbackFactory
 
 
 def req_inline(args) -> InlineKeyboardMarkup:
+    """
+    Генерирует inline клавиатуру для ответа на запрос электричек.
+    :param args: Аргументы запроса.
+    :return: Inline клавиатура с возможностями "повторить запрос", "сохранить маршрут" и "сохранить запрос".
+    """
     builder = InlineKeyboardBuilder()
     builder.button(
         text="Повторить запрос",

@@ -1,12 +1,22 @@
-from model.path import Station, Path, CachePath
-from datetime import datetime, timedelta
-import model.raw_req as raw_req
 import json
+from datetime import datetime, timedelta
+
+import model.raw_req as raw_req
+from model.path import Station, Path
 
 
 def get_path(dep_st: Station, arr_st: Station, dep_time: datetime = datetime.now(), sort_type: int = 1,
              filter_type: int = 0, col: int = 10) -> list[Path]:
-
+    """
+    Обрабатывает запрос API на расписание электричек от станции до станции.
+    :param dep_st: Станция отправления.
+    :param arr_st: Станция прибытия.
+    :param dep_time: Время отбытия в формате datetime или None.
+    :param sort_type: Тип сортировки от 0 до 2.
+    :param filter_type: Тип фильтрации от 0 до 2.
+    :param col: Количество электричек в запросе.
+    :return: Список путей в формате list[path.Path]
+    """
     if dep_time is None:
         dep_time = datetime.now()
     if isinstance(dep_time, timedelta):
@@ -28,8 +38,8 @@ def get_path(dep_st: Station, arr_st: Station, dep_time: datetime = datetime.now
         cur_list.append(
             Path(
                 path["scheduleId"],
-                Station(path["departureStationId"],path["departureStationName"]),
-                Station(path["arrivalStationId"],path["arrivalStationName"]),
+                Station(path["departureStationId"], path["departureStationName"]),
+                Station(path["arrivalStationId"], path["arrivalStationName"]),
                 Station(path['startStationId'], path['startStationName']),
                 Station(path['finishStationId'], path["finishStationName"]),
                 raw_req.str_to_time(path["departureTime"]), raw_req.str_to_time(path["arrivalTime"]),
@@ -47,6 +57,16 @@ def get_path(dep_st: Station, arr_st: Station, dep_time: datetime = datetime.now
 
 def req(station_from: str, station_to: str, sort_type: int = 0, dep_time: datetime = datetime.now(),
         filter_type: int = 0, col: int = 10) -> list[Path]:
+    """
+    Возвращает запрос на рассписание от станции до станции в формате списка путей.
+    :param station_from: Название станции отправления.
+    :param station_to: Название станции прибытия.
+    :param dep_time: Время отбытия в формате datetime или None.
+    :param sort_type: Тип сортировки от 0 до 2.
+    :param filter_type: Тип фильтрации от 0 до 2.
+    :param col: Количество электричек в запросе.
+    :return: Список путей в формате list[path.Path]
+    """
     if col <= 0:
         return []
     if isinstance(station_from, Station) and isinstance(station_to, Station):
@@ -57,6 +77,12 @@ def req(station_from: str, station_to: str, sort_type: int = 0, dep_time: dateti
 
 
 def paths_sort(cur_list: list[Path], sort_type: int = 0) -> list[Path]:
+    """
+    Сортирует список путей по `sort_type`
+    :param cur_list: Список путей (объект типа path.Path)
+    :param sort_type: Тип сортировки от 0 до 2 в соответсвии с "data/db_data.json"
+    :return: Возращает отсортированный список.
+    """
     str_sort_type: str = "regular"
     with open("data/db_data.json") as f:
         js = json.load(f)
@@ -67,6 +93,11 @@ def paths_sort(cur_list: list[Path], sort_type: int = 0) -> list[Path]:
 
 
 def get_station(station: str) -> Station | None:
+    """
+    Преобразует станцию по имени в объект класса Station.
+    :param station: Имя станции.
+    :return: Возвращает объект станции, если такая есть, в ином случае None.
+    """
     raw_json = raw_req.get_station(station)
     return Station(
         raw_json["id"],

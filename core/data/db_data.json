@@ -1,11 +1,11 @@
 {
-    "sort_type" : [
-        "dep_time",
-        "arr_time",
-        "path_time"
-    ], 
-    "train_type" : [
-        "high_speed", 
-        "regular"
-    ]
+  "sort_type": [
+    "dep_time",
+    "arr_time",
+    "path_time"
+  ],
+  "train_type": [
+    "high_speed",
+    "regular"
+  ]
 }

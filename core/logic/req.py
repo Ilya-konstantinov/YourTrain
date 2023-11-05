@@ -2,11 +2,19 @@ from data.answer_enums import BAD_REQUEST
 from database.db_cache_req import DBCacheReq
 from database.db_station import DBStation
 from database.db_user import DBUser
-from model.arg_format import time_arg, filter_arg, sort_arg, cor_col, cor_time, is_cor_arg, param_var
 from model import model
+from model.arg_format import time_arg, filter_arg, sort_arg, cor_col, cor_time, is_cor_arg, param_var
 
 
 async def bl_mlt_req(user_id: int, args: str, raw_ans: bool = False):
+    """
+    Обработка мультистанцевого запроса с сырыми аргументами.
+    :param user_id: Уникальный id пользователя.
+    :param args: Аргументы запроса.
+    :param raw_ans: Возвращать список путей или готовый ответ.
+    :return: Список путей если `raw_ans`=True или готовый ответ в ином случае. Если путей по данному запросу нет,
+    возвращает сообщение об ошибке.
+    """
     if not args:
         return BAD_REQUEST.ZERO_ARGS
 
@@ -21,6 +29,14 @@ async def bl_mlt_req(user_id: int, args: str, raw_ans: bool = False):
 
 
 async def bl_req(user_id: int, args: str, raw_ans: bool = False):
+    """
+    Обработка запроса с сырыми аргументами.
+    :param user_id: Уникальный id пользователя.
+    :param args: Аргументы запроса.
+    :param raw_ans: Возвращать список путей или готовый ответ.
+    :return: Список путей если `raw_ans`=True или готовый ответ в ином случае. Если путей по данному запросу нет,
+    возвращает сообщение об ошибке.
+    """
     if not args:
         return BAD_REQUEST.ZERO_ARGS
     args = args.replace('..', ':')
@@ -36,6 +52,18 @@ async def bl_req(user_id: int, args: str, raw_ans: bool = False):
 
 
 def mlt_ans(st_from, st_to, dep_time, sort_type, filter_type, col, raw_ans):
+    """
+    Обработка мультистанцевого запроса с готовыми аргументами.
+    :param st_from: Список станций отбытия.
+    :param st_to: Список станций прибытия.
+    :param dep_time: Время отсчета.
+    :param sort_type: Тип сортировки.
+    :param filter_type: Тип фильтрации.
+    :param col: Количество электричек в запросе.
+    :param raw_ans: Возвращать список путей или готовый ответ.
+    :return: Список путей если `raw_ans`=True или готовый ответ в ином случае. Если путей по данному запросу нет,
+    возвращает сообщение об ошибке.
+    """
     req: list[model.Path] = []
     dep_time = time_arg(dep_time)
     for fr in st_from:
@@ -58,9 +86,21 @@ def mlt_ans(st_from, st_to, dep_time, sort_type, filter_type, col, raw_ans):
 
 
 def singe_ans(st1, st2, dep_time, sort_type, filter_type, col, raw_ans):
+    """
+    Обработка запроса с готовыми аргументами.
+    :param st1: Станция отбытия.
+    :param st2: Станция прибытия.
+    :param dep_time: Время отсчета.
+    :param sort_type: Тип сортировки.
+    :param filter_type: Тип фильтрации.
+    :param col: Количество электричек в запросе.
+    :param raw_ans: Возвращать список путей или готовый ответ.
+    :return: Список путей если `raw_ans`=True или готовый ответ в ином случае. Если путей по данному запросу нет,
+    возвращает сообщение об ошибке.
+    """
     dep_time = time_arg(dep_time)
-    req: list = model.req(station_from=st1, station_to=st2, dep_time=dep_time, sort_type=sort_type,
-                          filter_type=filter_type, col=col)
+    req: list[model.Path] = model.req(station_from=st1, station_to=st2, dep_time=dep_time, sort_type=sort_type,
+                                      filter_type=filter_type, col=col)
 
     if req is None:  # None if server fault
         return BAD_REQUEST.SERVER_ERROR
@@ -74,7 +114,12 @@ def singe_ans(st1, st2, dep_time, sort_type, filter_type, col, raw_ans):
         return ans_format(req)
 
 
-def ans_format(req):
+def ans_format(req: list[model.Path]) -> str:
+    """
+    Запрос для отображения.
+    :param req: Список путей в запросе.
+    :return: Отображение в MARKDOWN_2 формате всех путей.
+    """
     ans = '\n'.join(
         [
             "```\n" + it.get_view() + "```" for it in req
@@ -85,7 +130,13 @@ def ans_format(req):
     return ans
 
 
-def single_req_parse(uid: int, args: str) -> str | tuple:
+def single_req_parse(uid: int, args: str) -> tuple[str, str, str, int, int, int] | str:
+    """
+    Обработка всех аргументов для обычного запроса.
+    :param uid: Уникальный id пользователя.
+    :param args: Все аргументы (станции, времени, фильтрации, сортировки и количества запросов)
+    :return: Все аргументы в корректном виде или сообщение об их некорректности.
+    """
     args = args.split()
     st1, st2 = args[:2]
     try:
@@ -108,7 +159,13 @@ def single_req_parse(uid: int, args: str) -> str | tuple:
     return st1, st2, dep_time, sort_type, filter_type, col
 
 
-def multi_req_parse(uid: int, args: str):
+def multi_req_parse(uid: int, args: str) -> tuple[list[str], list[str], str, int, int, int] | str:
+    """
+    Обработка всех аргументов для мультистанцевого запроса.
+    :param uid: Уникальный id пользователя.
+    :param args: Все аргументы (станции, времени, фильтрации, сортировки и количества запросов)
+    :return: Все аргументы в корректном виде или сообщение об их некорректности.
+    """
     st, args = args.split('\n')
     st_from, st_to = st.split(' -- ')
     st_from, st_to = st_from.split(), st_to.split()
@@ -144,7 +201,13 @@ def multi_req_parse(uid: int, args: str):
     return st_from, st_to, dep_time, sort_type, filter_type, col
 
 
-def args_parse(user_id, *args) -> str | tuple:
+def args_parse(user_id, *args: list[str]) -> str | tuple:
+    """
+    Обработка аргументов времени, фильтрации, сортировки и количества для запроса.
+    :param user_id: Уникальный id пользователя.
+    :param list[str] args: Аргументы в виде list[str]
+    :return: Корректные аргументы для запроса или сообщение об их некорректности.
+    """
     sort_type, filter_type, col = DBUser.user_params(user_id)[1:]
     dep_time: str | None = None
     args = args[0]
@@ -181,6 +244,11 @@ def args_parse(user_id, *args) -> str | tuple:
 
 
 async def bl_all_req(uid: int) -> str:
+    """
+    Все сохранённые запросы для отображения.
+    :param uid: Уникальный id пользователя.
+    :return: Отображение в MARKDOWN_2 формате всех запросов или сообщение об их отсутствии.
+    """
     reqs = DBCacheReq.cache_req_whole_get(uid)
     if not reqs:
         return "Похоже, у вас нет сохранённых запросов"
@@ -191,6 +259,11 @@ async def bl_all_req(uid: int) -> str:
 
 
 def check_station(st: str) -> str | None:
+    """
+    Проверка существования станции.
+    :param st: Имя станции
+    :return: Сообщение об ошибке если станции нет и None если есть.
+    """
     if not model.get_station(st):
         return BAD_REQUEST.BAD_STATION
 
@@ -198,6 +271,12 @@ def check_station(st: str) -> str | None:
 
 
 async def bl_parse_change(val_type: str, val: str) -> tuple[str, str] | str:
+    """
+    Проверяет, валиден ли val для типа параметра val_type.
+    :param val_type: Название параметра.
+    :param val: Значение параметра.
+    :return: Преобразованные под системный стандарты название параметра и его значение или сообщение об ошибке.
+    """
     val = param_var(val)
     if isinstance(is_cor_arg(val_type, val), str):
         return is_cor_arg(val_type, val)

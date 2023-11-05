@@ -3,7 +3,7 @@ from database.db_recache import DBRecache
 
 
 class _DBDel(DataBase):
-    
+
     def del_info(self, uid: int, name: str) -> bool:
         """
         Удаляет всю возможную информацию о пользователе.

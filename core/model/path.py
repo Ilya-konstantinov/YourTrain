@@ -1,14 +1,18 @@
 from datetime import datetime, timedelta
-from model.raw_req import get_whole_path
+
 from data.config import sort_ind_to_rus, filter_ind_to_rus
+
+"""
+Все функции .get_view() ограничены длинной 30 символов в длину, ради улучшения восприятия на маленьких экранах телефона.
+"""
 
 
 class Station:
     """
     Класс станции
     """
-    id: int
-    title: str
+    id: int  # Уникальный id станции
+    title: str  # Название станции
 
     def __init__(self, id: int, title: str) -> None:
         self.id = id
@@ -72,19 +76,11 @@ class Path:
             return '\n'.join([zero_line, time, second_line])
         return '\n'.join([zero_line, time, second_line, third_line])
 
-    def whole_path(self) -> list[str]:
-
-        stops: list[tuple[str | bool]] = get_whole_path(self.path_id)
-        for ind, st in enumerate(stops):
-            stops[ind] = (
-                f"{st[0]} {' ' * 4} {beauty_station(st[1])}",
-                st[2]
-            )
-
-        return stops
-
 
 class CachePath:
+    """
+    Класс закешированного маршрута.
+    """
     path_id: int
     user_id: int
     dep_st: Station
@@ -92,12 +88,17 @@ class CachePath:
     dep_time: timedelta
     only_updates: bool
 
-    def __init__(self, dep_st: Station, arr_st: Station, dep_time: timedelta, path_id: int, user_id: int, only_updates: bool):
+    def __init__(self, dep_st: Station, arr_st: Station, dep_time: timedelta, path_id: int, user_id: int,
+                 only_updates: bool):
         self.dep_st, self.arr_st = dep_st, arr_st
         self.dep_time, self.only_updates = dep_time, only_updates
         self.path_id, self.user_id = path_id, user_id
 
     def get_view(self) -> str:
+        """
+        Отображение маршрута.
+        :return: Возвращает отображение маршрута.
+        """
         dep_time = datetime.today().replace(hour=self.dep_time.seconds // 3600,
                                             minute=(self.dep_time.seconds % 3600) // 60)
         dep_time_f = f'Время отбытия: {beauty_time(dep_time)}'
@@ -141,12 +142,17 @@ class CacheRequest:
         self.dep_time = dep_time
 
         if isinstance(self.dep_time, timedelta):
-            self.dep_time = datetime.today().replace(hour=dep_time.seconds // 3600, minute=(dep_time.seconds % 3600) // 60)
+            self.dep_time = datetime.today().replace(hour=dep_time.seconds // 3600,
+                                                     minute=(dep_time.seconds % 3600) // 60)
 
         self.sort_type, self.filter_type, self.col, self.is_mlt = sort_type, filter_type, col, is_mlt
         self.user_id, self.name = user_id, name
 
     def get_view(self) -> str:
+        """
+        Отображение сохранённого запроса.
+        :return: Отображение сохранённого запроса.
+        """
         title = f"{self.name:-^30}"
         dd = '-' * 30
         st_from = ', '.join([st.title.capitalize() for st in self.dep_st])
@@ -162,8 +168,11 @@ class CacheRequest:
         ans += [column_names, dd, line]
         return '\n'.join(ans)
 
-    def get_params(self) -> str|tuple:
-
+    def get_params(self) -> str | tuple:
+        """
+        Возвращает параметры сохранённого запроса в виде строки
+        "dep_st_id arr_st_id dep_time sort_type filter_type col".
+        """
         st_from = str(self.dep_st[0].id) \
             if len(self.dep_st) == 1 else \
             ' '.join([str(st.id) for st in self.dep_st])
@@ -185,6 +194,11 @@ class CacheRequest:
 
 
 def beauty_time(time: datetime) -> str:
+    """
+    Преобразует `time` в строку формата HH:MM.
+    :param time: Объект `datetime` для преобразования.
+    :returns: Возвращает строку формата HH:MM.
+    """
     h = f'{time.hour:0>2}'
     m = f'{time.minute:0>2}'
     return f'{h}:{m}'
@@ -192,7 +206,6 @@ def beauty_time(time: datetime) -> str:
 
 def beauty_path_time(path_time: datetime | timedelta) -> str:
     """Конкретное время для отображения"""
-
     if isinstance(path_time, datetime):
         path_time = timedelta(hours=path_time.hour, minutes=path_time.minute, seconds=path_time.second)
 

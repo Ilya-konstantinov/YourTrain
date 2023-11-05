@@ -38,7 +38,6 @@ class _DBCacheReq(DataBase):
 
         return 0 if ans is None else ans[0]
 
-    
     def cache_req_create(self, req: CacheRequest) -> bool:
         """
         Сохраняет электричку с данными параметрами в БД.
@@ -98,7 +97,6 @@ class _DBCacheReq(DataBase):
 
         ans[0], ans[1] = json.loads(ans[0]), json.loads(ans[1])
 
-
         for ind, st in enumerate(ans[0]):
             ans[0][ind] = DBStation.station_by_id(st)
 
@@ -110,6 +108,11 @@ class _DBCacheReq(DataBase):
         return req
 
     def cache_req_whole_get(self, uid: int) -> list[CacheRequest]:
+        """
+        Возвращает все сохранённые пути определённого пользователя.
+        :param uid: Уникальный id пользователя.
+        :return: Список сохранённых путей пользователя
+        """
         keys = ["dep_st_id", "arr_st_id", "dep_time", "sort_type", "filter_type", "col", "is_mlt", "user_id", "name"]
         qer = f"SELECT {', '.join(keys)} FROM req_cache WHERE user_id = %s;"
         params = [uid]
@@ -138,6 +141,11 @@ class _DBCacheReq(DataBase):
         return ans
 
     def get_nearest(self, uid: int) -> list[CacheRequest | None]:
+        """
+        Первые несколько сохранённых запросов пользователя.
+        :param uid: Уникальный id пользователя.
+        :return: Возвращает первые три(или меньше) сохранённые пути пользователя.
+        """
         qer = "SELECT id FROM req_cache WHERE user_id = %s LIMIT 3;"
         ans: list[CacheRequest] = []
         params = [uid]
@@ -149,6 +157,11 @@ class _DBCacheReq(DataBase):
         return ans
 
     def cache_req_del(self, req: CacheRequest) -> None:
+        """
+        Удаляет определённый сохранённый запрос по path и user id.
+        :param req: Запрос, который надо удалить.
+        :return: Ничего :)
+        """
         uid, name = req.user_id, req.name
         qer = "DELETE FROM req_cache WHERE user_id = %s and name = %s;"
         params = [uid, name]
@@ -157,6 +170,11 @@ class _DBCacheReq(DataBase):
 
 
 def ind_format(identification: str) -> str | int:
+    """
+    Преобразование идентификатора запроса в нужный формат.
+    :param identification: Строка идентификатор.
+    :return: Преобразованный идентификатор.
+    """
     try:
         identification = int(identification)
     except:
@@ -166,4 +184,3 @@ def ind_format(identification: str) -> str | int:
 
 
 DBCacheReq = _DBCacheReq()
-

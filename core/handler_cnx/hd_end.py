@@ -14,11 +14,14 @@ from logic.service import bl_get_nearest_cache_req
 
 
 def hand(dp: Dispatcher):
+    """
+    Внесение функций в хендлер
+    """
     @dp.message(Command("cancel"))
     @dp.message(F.text.casefold() == "отмена")
     async def cancel_handler(message: Message, state: FSMContext) -> None:
         """
-        Allow user to cancel any action
+        Отмена любого действия и переход к базовому меню.
         """
         current_state = await state.get_state()
         if current_state:
@@ -35,6 +38,9 @@ def hand(dp: Dispatcher):
 
     @dp.message(F.text)
     async def get_cache(message: Message, state: FSMContext):
+        """
+        Восприятие любого запроса как запрос сохранённого запроса.
+        """
         ans = await get_cache_req(message.from_user.id, message.text)
         if not ans[0] == '`':
             await message.answer(ans)
@@ -44,5 +50,5 @@ def hand(dp: Dispatcher):
         await state.set_state(MStates.Menu.just_menu)
         await message.answer(ans, parse_mode=ParseMode.MARKDOWN_V2, reply_markup=req_inline(message.text))
         await message.answer("Меню", reply_markup=menu.menu(
-                *bl_get_nearest_cache_req(message.from_user.id)
-            ),)
+            *bl_get_nearest_cache_req(message.from_user.id)
+        ), )

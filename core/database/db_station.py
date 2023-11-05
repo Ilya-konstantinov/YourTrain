@@ -35,7 +35,6 @@ class _DBStation(DataBase):
             title=self.cur.fetchone()[0]
         )
 
-    
     def station_create(self, st: Station) -> None:
         """
         Создает станцию.

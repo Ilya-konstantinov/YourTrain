@@ -1,14 +1,21 @@
+import re
 from datetime import datetime, timedelta
+
 from data.answer_enums import BAD_REQUEST, SET
 from data.config import filter_dict, sort_dict, type_interp
-import re
+
 
 def time_arg(time: str) -> str | datetime:
+    """
+    Преобразование времени в корректную форму для запроса.
+    :param time: Время для преобразования или None.
+    :return: Возвращает datetime если время корректно, текст ошибки в ином случае
+    """
     dep_time = datetime.now()
     try:
-        if time == '0' or time == '-' or time is None:  # For no time changes
+        if time in ['0', 0, '-', None]:  # For no time changes
             ...
-        elif re.fullmatch(r'[+\-]\d+', time):  # For +del time
+        elif re.fullmatch(r'[+\-]\d+', time):  # For +delta time
             dep_time += timedelta(minutes=int(time))
         elif re.fullmatch(r'[0-3]?[0-9]\.[0-1]?[0-9]', time):  # For DD.MM time, like 28.02
             dep_time = datetime.strptime(time, "%d.%m")
@@ -34,11 +41,16 @@ def time_arg(time: str) -> str | datetime:
 
 
 def cor_time(time: str | None) -> bool | str:
+    """
+    Проверка, является ли время корректным.
+    :param time: Строка или None обозначающее время, которое будет проверяться.
+    :return: Возвращает True если значение корректно, текст ошибки в ином случае.
+    """
     try:
-        if re.fullmatch(r'[+\-]\d+', time):  # For +del time
-            timedelta(minutes=int(time))
-        elif time in ['0', 0, '-', None]:  # For no time changes
+        if time in ['0', 0, '-', None]:  # For no time changes
             ...
+        elif re.fullmatch(r'[+\-]\d+', time):  # For +delta time
+            timedelta(minutes=int(time))
         elif re.fullmatch(r'[0-3]?[0-9]\.[0-1]?[0-9]', time):  # For DD.MM time, like 28.02
             datetime.strptime(time, "%d.%m")
         elif re.fullmatch(r'[0-3]?[0-9]\.[0-1]?[0-9]\.[0-9][0-9]', time):  # For DD.MM.YY time, like 14.11.06
@@ -61,6 +73,11 @@ def cor_time(time: str | None) -> bool | str:
 
 
 def filter_arg(filter_type: str) -> int | str:
+    """
+    Преобразование значения в общий filter_type sort_type.
+    :param filter_type: Обозначение определения.
+    :return: Возвращает численную интерпретацию определения, или текст ошибки.
+    """
     for tp in filter_dict:
         if filter_type in tp:
             return filter_dict[tp]
@@ -69,6 +86,11 @@ def filter_arg(filter_type: str) -> int | str:
 
 
 def sort_arg(sort_type: str) -> int | str:
+    """
+    Преобразование значения в общий тип sort_type.
+    :param sort_type: Обозначение определения.
+    :return: Возвращает численную интерпретацию определения, или текст ошибки.
+    """
     for tp in sort_dict:
         if sort_type in tp:
             return sort_dict[tp]
@@ -77,6 +99,11 @@ def sort_arg(sort_type: str) -> int | str:
 
 
 def param_arg(param: str) -> str:
+    """
+    Проверка входит ли название параметра в известный перечень определений.
+    :param param: Название параметра.
+    :return: Возвращает принятую внутри разработки интерпретацию определения, если такое есть, иначе текст ошибки.
+    """
     for tp in type_interp:
         if param in tp:
             return type_interp[tp]
@@ -85,6 +112,12 @@ def param_arg(param: str) -> str:
 
 
 def param_var(var: str) -> int | str:
+    """
+    Проверка, входит ли значение в список значений (sort/filter)_type
+    :param var:
+    :return: Если значение входит в список определений для (sort/filter)_type, то возвращает цифровую интерпретацию
+     этого определения, иначе возвращает старое значение
+    """
     for tp in sort_dict:
         if var in tp:
             return sort_dict[tp]
@@ -97,6 +130,11 @@ def param_var(var: str) -> int | str:
 
 
 def cor_col(col: str):
+    """
+    Проверка, что количество электричек в запросе корректно [3;20].
+    :param col: Количество электричек в запросе.
+    :return: Возвращает bool значение, корректно ли количество
+    """
     try:
         col = int(col)
         assert 3 <= col <= 20
@@ -106,10 +144,21 @@ def cor_col(col: str):
 
 
 def cor_name(name: str) -> bool:
+    """
+    Проверка, что имя состоит только из латинских, кириллических символов, подчеркивания или цифр.
+    :param name: Имя для проверки.
+    :return: Возвращает bool значение, корректно ли имя
+    """
     return re.fullmatch(r'[A-z_А-я0-9]+', name) is not None
 
 
 def is_cor_arg(column_name: str, val: str | int) -> bool | str:
+    """
+    Проверка является ли значение и название изменяемого параметра корректным.
+    :param column_name: Название параметра ("name", "dep_time", "sort_type", "filter_type")
+    :param val: значение изменяемого параметра.
+    :return: Bool если и значение и название верное, str с ошибкой иначе.
+    """
     if column_name not in type_interp.values():
         return column_name
     elif column_name == "name":

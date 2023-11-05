@@ -4,20 +4,26 @@ from aiogram.filters import Command, CommandObject
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
+import keyboard.menu
 from FSMachines import MStates
 from callback.req import PathCallbackFactory
 from database.db_cache_path import DBCachePath
 from database.db_user import DBUser
 from keyboard import req_args
-from logic.cache_path import cache_path, bl_path_view
 from keyboard.cache_path import cache_menu
-import keyboard.menu
+from logic.cache_path import cache_path, bl_path_view
 from model.path import CacheRequest, CachePath
 
 
 def hand(dp: Dispatcher):
+    """
+    Внесение функций в хендлер
+    """
     @dp.message(Command("path_cache"))
     async def cmd_path_cache(message: Message, command: CommandObject, state: FSMContext):
+        """
+        Начало создания нового сохранённого маршрута. Вызов какого-либо запроса с данными аргументами.
+        """
         await state.set_state(MStates.CachePath.get_path)
         ans = await cache_path(message.from_user.id, command.args)
         if isinstance(ans, str):
@@ -30,6 +36,9 @@ def hand(dp: Dispatcher):
 
     @dp.message(MStates.CachePath.get_path)
     async def path_num(message: Message, state: FSMContext):
+        """
+        Выбор какого-то маршрута из представленных ранее или сообщение о неправильном номере.
+        """
         await state.set_state(MStates.CachePath.just_menu)
         num = message.text
         paths = (await state.get_data())['paths']
@@ -56,6 +65,9 @@ def hand(dp: Dispatcher):
             callback: CallbackQuery,
             callback_data: PathCallbackFactory,
     ):
+        """
+        Обработка удаления сохранённых запросов через Inline кнопки.
+        """
         args = (callback_data.uid, callback_data.pid)
         DBCachePath.del_cache_path(*args)
         await callback.message.answer("Ваш путь успешно удалён")
@@ -63,6 +75,9 @@ def hand(dp: Dispatcher):
 
     @dp.message(MStates.CachePath.just_menu, F.text.casefold() == "создать")
     async def create(message: Message, state: FSMContext):
+        """
+        Создание нового сохранённого маршрута через hd_req.py.
+        """
         await state.clear()
         await state.set_state(MStates.Request.get_st_from)
         await state.update_data(req=CacheRequest(None, None, '-',
@@ -75,13 +90,20 @@ def hand(dp: Dispatcher):
         )
 
     @dp.message(MStates.CachePath.just_menu, F.text.casefold() == "отмена")
-    async def _(message:Message, state:FSMContext):
+    async def _(message: Message, state: FSMContext) :
+        """
+        Возвращение к стандартному меню.
+        """
         await state.clear()
         await state.set_state(MStates.Menu.just_menu)
-        await message.answer("Возвращаю", reply_markup=keyboard.menu.menu(*DBUser.user_params(message.from_user.id)[1:]))
+        await message.answer("Возвращаю",
+                             reply_markup=keyboard.menu.menu(*DBUser.user_params(message.from_user.id)[1:]))
 
     @dp.message(MStates.Menu.just_menu, F.text.casefold() == "сохранённые маршруты")
     async def _(message: Message, state: FSMContext):
+        """
+        Открытие меню сохранённых маршрутов.
+        """
         await state.clear()
         await state.set_state(MStates.CachePath.just_menu)
         ans = bl_path_view(message.from_user.id)

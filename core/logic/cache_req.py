@@ -1,7 +1,7 @@
+from data.answer_enums import CACHE_REQ
 from database.db_cache_req import DBCacheReq
 from logic.req import single_req_parse, multi_req_parse, mlt_ans, singe_ans
-from data.answer_enums import CACHE_REQ
-from model.arg_format import cor_name, time_arg
+from model.arg_format import cor_name
 from model.model import get_station
 from model.path import CacheRequest
 
@@ -34,11 +34,11 @@ async def new_cache_req(user_id: int, args: str):
         st_from = [get_station(i) for i in st_from]
 
     if not DBCacheReq.cache_req_create(
-        CacheRequest(
-            dep_st=st_from, arr_st=st_to,
-            dep_time=dep_time, filter_type=filter_type, sort_type=sort_type, col=col,
-            is_mlt=is_mlt, user_id=user_id, name=name
-        )
+            CacheRequest(
+                dep_st=st_from, arr_st=st_to,
+                dep_time=dep_time, filter_type=filter_type, sort_type=sort_type, col=col,
+                is_mlt=is_mlt, user_id=user_id, name=name
+            )
     ):
         return CACHE_REQ.UNSUCCESS
 
@@ -60,10 +60,9 @@ async def get_cache_req(user_id: int, args: str) -> str:
 
     if not args:
         return CACHE_REQ.BAD_NAME
-    stations, args, is_mlt = (args.dep_st, args.arr_st), (args.dep_time, args.sort_type, args.filter_type, args.col), args.is_mlt
-# st_from, st_to, dep_time, sort_type, filter_type, col, raw_ans
+    stations, args, is_mlt = (args.dep_st, args.arr_st), (
+    args.dep_time, args.sort_type, args.filter_type, args.col), args.is_mlt
     if is_mlt:
         return mlt_ans(*stations, *args, raw_ans=False)
     else:
         return singe_ans(*(stations[0][0], stations[1][0]), *args, raw_ans=False)
-

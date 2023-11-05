@@ -28,7 +28,6 @@ class _DBUser(DataBase):
         self.cur.execute(qer, tuple([uid]))
         return self.cur.fetchone()
 
-    
     def user_create(
             self, uid: int,
             name: str,
@@ -52,7 +51,6 @@ class _DBUser(DataBase):
         self.cur.execute(qer, (uid, name, chat_id, *DB_DEFAULT))
         return True
 
-    
     def set_params(self, uid: int, param_key: str, param_val: int) -> bool:
         """
         Изменяет параметр по умолчанию для user

@@ -10,15 +10,21 @@ from callback.req import ReqCallbackFactory
 from database.db_cache_req import DBCacheReq
 from database.db_station import DBStation
 from database.db_user import DBUser
+from keyboard import req_inline, req_args, menu, settings_reply
 from logic.cache_path import cache_path
 from logic.req import bl_req, bl_mlt_req, check_station, bl_parse_change
-from keyboard import req_inline, req_args, menu, settings_reply
 from model.path import CacheRequest, Station
 
 
 def hand(dp: Dispatcher):
+    """
+    Внесение функций в хендлер
+    """
     @dp.message(Command("req"))
     async def cmd_req(message: Message, command: CommandObject):
+        """
+        Базовый вызов запроса расписания с аргументами.
+        """
         ans = await bl_req(user_id=message.from_user.id, args=command.args)
         if ans[0] != '`':
             await message.answer(ans)
@@ -34,6 +40,9 @@ def hand(dp: Dispatcher):
 
     @dp.message(Command("multi_req", "mltreq"))
     async def mlt_req(message: Message, command: CommandObject):
+        """
+        Мультистанцевый вызов запроса расписания с аргументами.
+        """
         ans = await bl_mlt_req(user_id=message.from_user.id, args=command.args)
         await message.answer(ans, parse_mode=ParseMode.MARKDOWN_V2)
 
@@ -43,6 +52,15 @@ def hand(dp: Dispatcher):
             callback_data: ReqCallbackFactory,
             state: FSMContext
     ):
+        """
+        Обработка callback'ов запросов, а конкретнее:
+
+        - Сохранение пути
+
+        - Повторение запроса
+
+        - Сохранение маршрута
+        """
         args = callback_data.params
         match callback_data.action:
             case "req":
@@ -65,12 +83,14 @@ def hand(dp: Dispatcher):
                 pass
         await callback.answer()
 
-    # Gonna cry ?
     @dp.message(MStates.Menu.just_menu, F.text.casefold() == "запрос")
     async def button_req(message: Message, state: FSMContext):
+        """
+        Начало обработки запроса расписания, переход к запросу станций.
+        """
         await state.clear()
         await state.set_state(MStates.Request.get_st_from)
-        await state.update_data(req=CacheRequest(None, None,'-',
+        await state.update_data(req=CacheRequest(None, None, '-',
                                                  *DBUser.user_params(message.from_user.id)[1:],
                                                  is_mlt=False, user_id=message.from_user.id),
                                 action='req')
@@ -82,6 +102,10 @@ def hand(dp: Dispatcher):
     @dp.message(MStates.Request.get_st_from)
     @dp.message(MStates.Request.get_st_to)
     async def button_st(message: Message, state: FSMContext):
+        """
+        Запрос станций, переход к параметрам запроса.
+        Определение, является ли запрос мультистанцевым.
+        """
         st: str = message.text.strip()
         st: list[str | Station] = [st] if st.count(' ') == 0 else st.split()
         req: CacheRequest = (await state.get_data())['req']
@@ -95,7 +119,7 @@ def hand(dp: Dispatcher):
                 await message.answer(check_station(station),
                                      reply_markup=menu.menu(*DBUser.user_params(message.from_user.id)[1:]))
             if not DBStation.station_exists(
-                model.model.get_station(station)
+                    model.model.get_station(station)
             ):
                 DBStation.station_create(model.model.get_station(station))
 
@@ -119,13 +143,14 @@ def hand(dp: Dispatcher):
                 reply_markup=req_args.args(req)
             )
 
-
-
     @dp.message(MStates.Request.get_args, F.text.contains("отправления"))
     @dp.message(MStates.Request.get_args, F.text.contains("электричек"))
     @dp.message(MStates.Request.get_args, F.text.contains("сортировки"))
     @dp.message(MStates.Request.get_args, F.text.contains("фильтрации"))
     async def req_get_args(message: Message, state: FSMContext):
+        """
+        Вызов изменения параметра запроса с определением типа параметра.
+        """
         await state.set_state(MStates.Request.change_args)
         val_type: str = ""
         if message.text.__contains__("электричек"):
@@ -141,6 +166,9 @@ def hand(dp: Dispatcher):
 
     @dp.message(MStates.Request.change_args)
     async def req_change_args(message: Message, state: FSMContext):
+        """
+        Изменение параметра state['val_type'] или сообщение о его некорректности.
+        """
         val_type = (await state.get_data())["val_type"]
         ans = await bl_parse_change(val_type, message.text.lower())
         req: CacheRequest = (await state.get_data())['req']
@@ -156,9 +184,18 @@ def hand(dp: Dispatcher):
 
     @dp.message(MStates.Request.get_args, F.text.casefold() == "сделать запрос")
     async def button_make_req(message: Message, state: FSMContext):
+        """
+        Вызов запроса с определением цели:
+
+        - Простое расписание
+
+        - Закешировать запрос
+
+        - Закешировать маршрут
+        """
         req: CacheRequest = (await state.get_data())['req']
-        # message.reply_markup
         action = (await state.get_data())['action']
+        await state.clear()
         if action == 'cache':
             DBCacheReq.cache_req_create(req)
             await message.answer("Ваш запрос сохранён!",
@@ -183,10 +220,8 @@ def hand(dp: Dispatcher):
                                  reply_markup=menu.menu(*DBUser.user_params(message.from_user.id)[1:]),
                                  parse_mode=ParseMode.MARKDOWN_V2)
 
-            await state.clear()
             await state.set_state(MStates.CachePath.get_path)
             await state.update_data(paths=ans[1])
             return
 
-        await state.clear()
         await state.set_state(MStates.Menu.just_menu)
