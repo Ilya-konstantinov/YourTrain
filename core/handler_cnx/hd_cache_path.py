@@ -12,6 +12,7 @@ from database.db_user import DBUser
 from keyboard import req_args
 from keyboard.cache_path import cache_menu
 from logic.cache_path import cache_path, bl_path_view
+from logic.service import bl_get_nearest_cache_req
 from model.path import CacheRequest, CachePath
 
 
@@ -56,7 +57,7 @@ def hand(dp: Dispatcher):
             user_id=message.from_user.id, only_updates=False
         )
         DBCachePath.cache_path_create(message.from_user.id, path)
-        await message.answer("Ваш маршрут добавлен", reply_markup=cache_menu())
+        await message.answer("Ваш маршрут добавлен", reply_markup=cache_menu(), parse_mode=ParseMode.MARKDOWN_V2)
         ans = bl_path_view(message.from_user.id)
         await message.answer(ans)
 
@@ -68,7 +69,7 @@ def hand(dp: Dispatcher):
         """
         Обработка удаления сохранённых запросов через Inline кнопки.
         """
-        args = (callback_data.uid, callback_data.pid)
+        args = (callback.from_user.id, callback_data.pid)
         DBCachePath.del_cache_path(*args)
         await callback.message.answer("Ваш путь успешно удалён")
         await callback.answer()
@@ -97,7 +98,7 @@ def hand(dp: Dispatcher):
         await state.clear()
         await state.set_state(MStates.Menu.just_menu)
         await message.answer("Возвращаю",
-                             reply_markup=keyboard.menu.menu(*DBUser.user_params(message.from_user.id)[1:]))
+                             reply_markup=keyboard.menu.menu(*bl_get_nearest_cache_req(message.from_user.id)[1:]))
 
     @dp.message(MStates.Menu.just_menu, F.text.casefold() == "сохранённые маршруты")
     async def _(message: Message, state: FSMContext):
@@ -110,4 +111,5 @@ def hand(dp: Dispatcher):
         if not ans:
             ans = "У тебя еще нет сохранённых маршрутов"
         await message.answer(ans,
-                             reply_markup=cache_menu())
+                             reply_markup=cache_menu(),
+                             parse_mode=ParseMode.MARKDOWN_V2)

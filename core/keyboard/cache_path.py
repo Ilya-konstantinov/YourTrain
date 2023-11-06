@@ -12,7 +12,7 @@ def path_inline(pid: int, uid: int) -> InlineKeyboardMarkup:
     :return: Inline кнопка удаления сохранённого маршрута
     """
     kb = InlineKeyboardBuilder()
-    kb.button(text="Удалить", callback_data=PathCallbackFactory(pid=pid, uid=uid))
+    kb.button(text="Удалить", callback_data=PathCallbackFactory(pid=pid, action="del"))
 
     return kb.as_markup()
 
@@ -26,7 +26,7 @@ def cache_menu() -> ReplyKeyboardMarkup:
         keyboard=[
             [KeyboardButton(text="Создать"),
              KeyboardButton(text="Удалить")],
-            [KeyboardButton(text="Обратно")]
+            [KeyboardButton(text="Отмена")]
         ]
     )
     return kb

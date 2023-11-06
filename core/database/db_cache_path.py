@@ -109,7 +109,7 @@ class _DBCachePath(DataBase):
         :return: Возвращает список путей в формате [(Станция отправления, станция прибытия, время старое отправления)]
         """
 
-        keys = ["path_id", "user_id", "dep_st", "arr_st", "dep_time"]
+        keys = [ "dep_st", "arr_st","dep_time", "path_id", "user_id", "only_updates"]
         qer = f"SELECT {', '.join(keys)} FROM path_cache WHERE user_id = %s;"
         params = [uid]
         self.cur.execute(qer, params)

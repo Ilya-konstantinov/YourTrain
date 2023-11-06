@@ -162,7 +162,7 @@ def hand(dp: Dispatcher):
         """
         await state.clear()
         await state.set_state(MStates.Menu.just_menu)
-        await message.answer("Возвращаю", reply_markup=menu.menu(*DBCacheReq.get_nearest(message.from_user.id)))
+        await message.answer("Возвращаю", reply_markup=menu.menu(*bl_get_nearest_cache_req(message.from_user.id)))
 
     @dp.message(MStates.CacheReq.just_cache, F.text.casefold() == "создать")
     async def create(message: Message, state: FSMContext):
@@ -183,6 +183,7 @@ def hand(dp: Dispatcher):
             await message.answer(ans, reply_markup=cache_req.cache_req_reply(
                 DBCacheReq.cache_req_whole_get(message.from_user.id)
             ))
+            return
         uid = message.from_user.id
         await state.clear()
         await state.set_state(MStates.Request.get_st_from)
@@ -221,4 +222,8 @@ def hand(dp: Dispatcher):
         params = (await state.get_data())['params']
         params = name + ' ' + params
         ans = await new_cache_req(message.from_user.id, params)
-        await message.answer(ans)
+        await state.clear()
+        await state.set_state(MStates.Menu.just_menu)
+        await message.answer(ans, reply_markup=menu.menu(
+            *bl_get_nearest_cache_req(message.from_user.id)
+        ),)

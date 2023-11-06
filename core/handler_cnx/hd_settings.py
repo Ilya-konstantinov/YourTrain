@@ -114,7 +114,7 @@ def hand(dp: Dispatcher):
         await message.reply_document(BufferedInputFile(json.encode(), filename="config.json"), caption="config.json",
                                      reply_markup=settings_reply.give(*DBUser.user_params(message.from_user.id)[1:]))
 
-    @dp.message(MStates.Settings.just_settings, F.text.casefold() == 'очистить')
+    @dp.message(MStates.Settings.just_settings, F.text.casefold() == 'очистить полностью')
     async def set_del(message: Message):
         """
         Полностью удаляет информацию о сохранённых путях и запросах пользователя, а его настройки меняет на стандартные.

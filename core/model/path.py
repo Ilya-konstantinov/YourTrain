@@ -101,7 +101,7 @@ class CachePath:
         """
         dep_time = datetime.today().replace(hour=self.dep_time.seconds // 3600,
                                             minute=(self.dep_time.seconds % 3600) // 60)
-        dep_time_f = f'Время отбытия: {beauty_time(dep_time)}'
+        dep_time_f = f'Время отбытия:{beauty_time(dep_time):>16}'
         dep_title = beauty_station(self.dep_st, 12)
         arr_tile = beauty_station(self.arr_st, 12)
         second_line = f'{dep_title:<12}{" " * 6}{arr_tile:>12}'
@@ -148,8 +148,6 @@ class CacheRequest:
         self.sort_type, self.filter_type, self.col, self.is_mlt = sort_type, filter_type, col, is_mlt
         self.user_id, self.name = user_id, name
 
-        if len(dep_st) > 1 or len(arr_st) > 1:
-            self.is_mlt = 1
 
     def get_view(self) -> str:
         """

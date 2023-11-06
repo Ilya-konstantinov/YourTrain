@@ -13,6 +13,7 @@ from database.db_user import DBUser
 from keyboard import req_inline, req_args, menu, settings_reply
 from logic.cache_path import cache_path
 from logic.req import bl_req, bl_mlt_req, check_station, bl_parse_change
+from logic.service import bl_get_nearest_cache_req
 from model.path import CacheRequest, Station
 
 
@@ -72,7 +73,10 @@ def hand(dp: Dispatcher):
             case "cache_path":
                 await state.clear()
                 await state.set_state(MStates.CachePath.get_path)
-                await cache_path(callback.from_user.id, callback_data.params)
+                paths = await cache_path(callback.from_user.id,args)
+                await state.update_data(
+                    paths=paths
+                )
                 await callback.message.answer("Введите номер пути, который вы хотите добавить")
             case "cache_req":
                 await state.clear()
@@ -117,7 +121,8 @@ def hand(dp: Dispatcher):
                 await state.clear()
                 await state.set_state(MStates.Menu.just_menu)
                 await message.answer(check_station(station),
-                                     reply_markup=menu.menu(*DBUser.user_params(message.from_user.id)[1:]))
+                                     reply_markup=menu.menu(*bl_get_nearest_cache_req(message.from_user.id)[1:]))
+                return
             if not DBStation.station_exists(
                     model.model.get_station(station)
             ):
@@ -199,7 +204,7 @@ def hand(dp: Dispatcher):
         if action == 'cache':
             DBCacheReq.cache_req_create(req)
             await message.answer("Ваш запрос сохранён!",
-                                 reply_markup=menu.menu(*DBUser.user_params(message.from_user.id)[1:]))
+                                 reply_markup=menu.menu(*bl_get_nearest_cache_req(message.from_user.id)))
         elif action == "req":
             f = bl_mlt_req if req.is_mlt else bl_req
             ans = await f(message.from_user.id, req.get_params())
@@ -208,7 +213,7 @@ def hand(dp: Dispatcher):
                                  reply_markup=req_inline.req_inline(req.get_params()),
                                  parse_mode=ParseMode.MARKDOWN_V2)
             await message.answer("Меню",
-                                 reply_markup=menu.menu(*DBUser.user_params(message.from_user.id)[1:]),
+                                 reply_markup=menu.menu(*bl_get_nearest_cache_req(message.from_user.id)),
                                  parse_mode=ParseMode.MARKDOWN_V2)
         elif action == "cache_path":
             ans = await cache_path(message.from_user.id, req.get_params())
@@ -217,7 +222,7 @@ def hand(dp: Dispatcher):
                                  reply_markup=req_inline.req_inline(req.get_params()),
                                  parse_mode=ParseMode.MARKDOWN_V2)
             await message.answer("Выведите номер пути, который хотите добавить",
-                                 reply_markup=menu.menu(*DBUser.user_params(message.from_user.id)[1:]),
+                                 reply_markup=menu.menu(*bl_get_nearest_cache_req(message.from_user.id)),
                                  parse_mode=ParseMode.MARKDOWN_V2)
 
             await state.set_state(MStates.CachePath.get_path)

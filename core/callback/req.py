@@ -13,5 +13,5 @@ class PathCallbackFactory(CallbackData, prefix="pa"):
     """
     Фабрика callback для сохранённых маршрутов
     """
+    action: str
     pid: int
-    uid: int

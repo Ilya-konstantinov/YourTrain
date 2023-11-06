@@ -1,7 +1,9 @@
 from aiogram import Dispatcher
 from aiogram.filters import Command, CommandObject
+from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from FSMachines import MStates
 from data.answer_enums import EDUC
 from database.db_user import DBUser
 from keyboard import menu
@@ -13,7 +15,7 @@ def hand(dp: Dispatcher):
     Внесение функций в хендлер
     """
     @dp.message(Command("start"))
-    async def cmd_start(message: Message):
+    async def cmd_start(message: Message, state: FSMContext):
         """
         Начинает работу с пользователем и заносит его в БД.
         """
@@ -24,6 +26,8 @@ def hand(dp: Dispatcher):
             DBUser.user_create(user.id, user.first_name, message.chat.id)
 
         ans = await bl_start(user_id=user.id, user_exists=user_exists)
+        await state.clear()
+        await state.set_state(MStates.Menu.just_menu)
         await message.answer(ans)
         await message.answer(EDUC.CLASSIC, reply_markup=menu.menu(
             *bl_get_nearest_cache_req(message.from_user.id)

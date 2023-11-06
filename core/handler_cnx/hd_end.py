@@ -8,8 +8,8 @@ from aiogram.types import Message
 
 from FSMachines import MStates
 from keyboard import menu
-from keyboard.req_inline import req_inline
 from logic.cache_req import get_cache_req
+from logic.req import bl_req
 from logic.service import bl_get_nearest_cache_req
 
 
@@ -17,6 +17,7 @@ def hand(dp: Dispatcher):
     """
     Внесение функций в хендлер
     """
+
     @dp.message(Command("cancel"))
     @dp.message(F.text.casefold() == "отмена")
     async def cancel_handler(message: Message, state: FSMContext) -> None:
@@ -40,15 +41,21 @@ def hand(dp: Dispatcher):
     async def get_cache(message: Message, state: FSMContext):
         """
         Восприятие любого запроса как запрос сохранённого запроса.
+        Если запрос не подходит как сохранённый, он воспринимает его как обычный запрос
         """
-        ans = await get_cache_req(message.from_user.id, message.text)
+        f = bl_req if message.text.count(' ') else get_cache_req
+        ans = await f(message.from_user.id, message.text)
         if not ans[0] == '`':
-            await message.answer(ans)
+            await message.answer(ans, reply_markup=menu.menu(
+                *bl_get_nearest_cache_req(message.from_user.id)
+            ))
+            if await state.get_state():
+                await state.clear()
+            await state.set_state(MStates.Menu.just_menu)
             return
         if await state.get_state():
             await state.clear()
         await state.set_state(MStates.Menu.just_menu)
-        await message.answer(ans, parse_mode=ParseMode.MARKDOWN_V2, reply_markup=req_inline(message.text))
-        await message.answer("Меню", reply_markup=menu.menu(
+        await message.answer(ans, parse_mode=ParseMode.MARKDOWN_V2, reply_markup=menu.menu(
             *bl_get_nearest_cache_req(message.from_user.id)
-        ), )
+        ))
