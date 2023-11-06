@@ -5,6 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
 import keyboard.menu
+import model.model
 from FSMachines import MStates
 from callback.req import PathCallbackFactory
 from database.db_cache_path import DBCachePath
@@ -69,9 +70,13 @@ def hand(dp: Dispatcher):
         """
         Обработка удаления сохранённых запросов через Inline кнопки.
         """
-        args = (callback.from_user.id, callback_data.pid)
-        DBCachePath.del_cache_path(*args)
-        await callback.message.answer("Ваш путь успешно удалён")
+        if callback_data.action == "del":
+            args = (callback.from_user.id, callback_data.pid)
+            DBCachePath.del_cache_path(*args)
+            await callback.message.answer("Ваш путь успешно удалён")
+        if callback_data.action == "print":
+            ans = model.model.nocache_path_view(callback_data.pid)
+            await callback.message.answer(f'```\n{ans}```', parse_mode=ParseMode.MARKDOWN_V2)
         await callback.answer()
 
     @dp.message(MStates.CachePath.just_menu, F.text.casefold() == "создать")

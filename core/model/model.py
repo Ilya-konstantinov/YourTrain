@@ -2,7 +2,7 @@ import json
 from datetime import datetime, timedelta
 
 import model.raw_req as raw_req
-from model.path import Station, Path
+from model.path import Station, Path, nocache_path_view_raw
 
 
 def get_path(dep_st: Station, arr_st: Station, dep_time: datetime = datetime.now(), sort_type: int = 1,
@@ -103,3 +103,19 @@ def get_station(station: str) -> Station | None:
         raw_json["id"],
         raw_json["name"]
     ) if raw_json else raw_json
+
+
+def nocache_path_view(pid: int):
+    """
+    Возвращает отображение данного пути.
+    :param pid: id пути.
+    :return: Строка для отображения пути.
+    """
+    stops = raw_req.get_whole_path(pid)
+    stops = [list(st[1])for st in
+             sorted(
+                     stops.items(),
+                     key=lambda x: x[1][0]
+                 )
+             ]
+    return nocache_path_view_raw(stops)

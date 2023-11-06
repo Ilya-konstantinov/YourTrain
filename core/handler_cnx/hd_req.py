@@ -4,6 +4,7 @@ from aiogram.filters import Command, CommandObject
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
+import logic.req
 import model.model
 from FSMachines import MStates
 from callback.req import ReqCallbackFactory
@@ -210,7 +211,8 @@ def hand(dp: Dispatcher):
             ans = await f(message.from_user.id, req.get_params())
 
             await message.answer(ans,
-                                 reply_markup=req_inline.req_inline(req.get_params()),
+                                 reply_markup=req_inline.req_inline(req.get_params(),
+                                                                    logic.req.paths_ids(req)),
                                  parse_mode=ParseMode.MARKDOWN_V2)
             await message.answer("Меню",
                                  reply_markup=menu.menu(*bl_get_nearest_cache_req(message.from_user.id)),
@@ -219,7 +221,8 @@ def hand(dp: Dispatcher):
             ans = await cache_path(message.from_user.id, req.get_params())
 
             await message.answer(ans[0],
-                                 reply_markup=req_inline.req_inline(req.get_params()),
+                                 reply_markup=req_inline.req_inline(req.get_params(),
+                                                                    logic.req.paths_ids(req)),
                                  parse_mode=ParseMode.MARKDOWN_V2)
             await message.answer("Выведите номер пути, который хотите добавить",
                                  reply_markup=menu.menu(*bl_get_nearest_cache_req(message.from_user.id)),

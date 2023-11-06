@@ -194,6 +194,21 @@ class CacheRequest:
             return sts + ' ' + params
 
 
+def nocache_path_view_raw(stops: list[list[timedelta, str, bool]]) -> str:
+    """
+    Возвращает строку остановок определённого пути
+    :param stops: Отсортированные по времени пути станции пути
+    :return: Строку для вывода
+    """
+    ans: list[str] = []
+    for stop in stops:
+        if stop[2]:
+            continue
+        time_f = beauty_path_time(stop[0])
+        st_f = beauty_station(Station(title=stop[1], id=0), 20)
+        ans.append(f'{time_f:<10}{st_f:>20}')
+    return '\n'.join(ans)
+
 def beauty_time(time: datetime) -> str:
     """
     Преобразует `time` в строку формата HH:MM.

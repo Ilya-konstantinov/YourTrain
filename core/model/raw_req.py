@@ -70,7 +70,7 @@ def get_station(station: str):
     return raw_json
 
 
-def get_whole_path(pid: int) -> dict[int, tuple[timedelta | str | bool]] | None:
+def get_whole_path(pid: int) -> dict[int, tuple[timedelta, str, bool]] | None:
     """
     Обрабатывает весь маршрут с данным `path_id`.
     :param pid: Уникальный ``id`` маршрута.

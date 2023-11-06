@@ -4,6 +4,7 @@ from database.db_station import DBStation
 from database.db_user import DBUser
 from model import model
 from model.arg_format import time_arg, filter_arg, sort_arg, cor_col, cor_time, is_cor_arg, param_var
+from model.path import CacheRequest
 
 
 async def bl_mlt_req(user_id: int, args: str, raw_ans: bool = False):
@@ -282,3 +283,20 @@ async def bl_parse_change(val_type: str, val: str) -> tuple[str, str] | str:
         return is_cor_arg(val_type, val)
     else:
         return val_type, val
+
+
+def paths_ids(req: CacheRequest) -> list[int]:
+    """
+    Возвращает id путей данного запроса
+    :param req: id пути
+    :return: Список id путей запроса
+    """
+    stations, args, is_mlt = (req.dep_st, req.arr_st), (
+    req.dep_time, req.sort_type, req.filter_type, req.col), req.is_mlt
+    f = mlt_ans if is_mlt else singe_ans
+    if is_mlt:
+        paths = mlt_ans(*stations, *args, raw_ans=True)
+    else:
+        paths = singe_ans(*(stations[0][0], stations[1][0]), *args, raw_ans=True)
+
+    return [path.path_id for path in paths]

@@ -1,7 +1,6 @@
-from aiogram.types import InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
-from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
-from callback.req import ReqCallbackFactory
 from data.config import filter_ind_to_rus, sort_ind_to_rus
 from model.path import CacheRequest
 
