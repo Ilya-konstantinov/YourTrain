@@ -44,18 +44,14 @@ def hand(dp: Dispatcher):
         Если запрос не подходит как сохранённый, он воспринимает его как обычный запрос
         """
         f = bl_req if message.text.count(' ') else get_cache_req
+        await state.set_state(MStates.Menu.just_menu)
         ans = await f(message.from_user.id, message.text)
         if not ans[0] == '`':
             await message.answer(ans, reply_markup=menu.menu(
                 *bl_get_nearest_cache_req(message.from_user.id)
             ))
-            if await state.get_state():
-                await state.clear()
-            await state.set_state(MStates.Menu.just_menu)
             return
-        if await state.get_state():
-            await state.clear()
-        await state.set_state(MStates.Menu.just_menu)
+
         await message.answer(ans, parse_mode=ParseMode.MARKDOWN_V2, reply_markup=menu.menu(
             *bl_get_nearest_cache_req(message.from_user.id)
         ))

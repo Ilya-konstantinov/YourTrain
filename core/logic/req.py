@@ -69,8 +69,10 @@ def mlt_ans(st_from, st_to, dep_time, sort_type, filter_type, col, raw_ans):
     """
     req: list[model.Path] = []
     dep_time = time_arg(dep_time)
+
     if isinstance(dep_time, str):
         return dep_time
+
     for fr in st_from:
         for to in st_to:
             req += model.req(station_from=fr, station_to=to, sort_type=sort_type, dep_time=dep_time,
@@ -144,13 +146,15 @@ def single_req_parse(uid: int, args: str) -> tuple[str, str, str, int, int, int]
     :param args: Все аргументы (станции, времени, фильтрации, сортировки и количества запросов)
     :return: Все аргументы в корректном виде или сообщение об их некорректности.
     """
-    args = args.split()
+    args = args.strip().split()
     st1, st2 = args[:2]
     try:
         int(st1)
         int(st2)
         assert len(st1) == len(st2) == 7
-        st1, st2 = DBStation.station_by_id(int(st1)).title, DBStation.station_by_id(int(st2)).title
+        st1, st2 = (DBStation.station_by_id(int(st1)), DBStation.station_by_id(int(st2)))
+        assert st1 and st2
+        st1, st2 = st1.title, st2.title
     except:
         ...
     cor_args = args_parse(uid, args[2:])
@@ -183,8 +187,12 @@ def multi_req_parse(uid: int, args: str) -> tuple[list[str], list[str], str, int
         for st in st_to:
             int(st)
             assert len(st) == 7
-        st_from = [DBStation.station_by_id(int(st)).title for st in st_from]
-        st_to = [DBStation.station_by_id(int(st)).title for st in st_to]
+        st_from = [DBStation.station_by_id(int(st)) for st in st_from]
+        st_to = [DBStation.station_by_id(int(st)) for st in st_to]
+        assert st_to == [True]*len(st_to)
+        assert st_from == [True]*len(st_from)
+        st_from = [st.title for st in st_from]
+        st_to = [st.title for st in st_to]
     except:
         ...
 

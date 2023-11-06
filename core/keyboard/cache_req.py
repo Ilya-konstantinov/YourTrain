@@ -76,6 +76,7 @@ def change_cached(req: CacheRequest) -> ReplyKeyboardMarkup:
                 KeyboardButton(text="Сохранить запрос")
             ]
         ],
-        resize_keyboard=True
+        resize_keyboard=True,
+        one_time_keyboard=False
     )
     return kb

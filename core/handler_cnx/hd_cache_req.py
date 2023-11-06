@@ -110,6 +110,10 @@ def hand(dp: Dispatcher):
         await state.update_data(val_type=val_type)
         await message.answer("Укажите желаемое значение", reply_markup=settings_reply.def_val(val_type))
 
+    @dp.message(MStates.CacheReq.change_cached, F.text.contains("Имя"))
+    async def cache_recache_false(message: Message, state: FSMContext):
+        await message.answer("Вы ввели некорректное имя характеристики. Повторите запрос")
+
     @dp.message(MStates.CacheReq.change_cached, F.text.casefold() == "сохранить запрос")
     async def save(message: Message, state: FSMContext):
         """
@@ -145,6 +149,7 @@ def hand(dp: Dispatcher):
         val_type = (await state.get_data())["val_type"]
         req: CacheRequest = (await state.get_data())["req"]
         cache_req.change_cached(req)
+        await state.set_state(MStates.CacheReq.change_cached)
         ans = await bl_parse_change(val_type, message.text.lower())
         if isinstance(ans, str):
             await message.answer(ans, reply_markup=cache_req.change_cached(req))
@@ -153,7 +158,6 @@ def hand(dp: Dispatcher):
         val_type, val = ans
         req.__setattr__(val_type, val)
         await state.update_data(req=req)
-        await state.set_state(MStates.CacheReq.change_cached)
         await message.answer("Ваше значение успешно изменено",
                              reply_markup=cache_req.change_cached(req))
 
@@ -173,6 +177,7 @@ def hand(dp: Dispatcher):
         name = message.text
         ans = await bl_parse_change("name", name)
         if isinstance(ans, str):
+            await state.set_state(MStates.CacheReq.just_menu)
             await message.answer(ans, reply_markup=cache_req.cache_req_reply(
                 DBCacheReq.cache_req_whole_get(message.from_user.id)
             ))
@@ -198,13 +203,7 @@ def hand(dp: Dispatcher):
         if ans[0] != '`':
             await message.answer(ans)
             return
-        if await state.get_state():
-            await state.clear()
-        await state.set_state(MStates.Menu.just_menu)
         await message.answer(ans, parse_mode=ParseMode.MARKDOWN_V2, reply_markup=req_inline(message.text))
-        await message.answer("Меню", reply_markup=menu.menu(
-            *bl_get_nearest_cache_req(message.from_user.id)
-        ), )
 
     @dp.message(MStates.CacheRequest.get_name)
     async def get_name(message: Message, state: FSMContext):

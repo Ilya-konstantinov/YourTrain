@@ -29,6 +29,7 @@ def hand(dp: Dispatcher):
         await state.set_state(MStates.CachePath.get_path)
         ans = await cache_path(message.from_user.id, command.args)
         if isinstance(ans, str):
+            await state.set_state(MStates.CachePath.just_menu)
             await message.answer(ans, reply_markup=cache_menu())
             return
 
@@ -47,8 +48,9 @@ def hand(dp: Dispatcher):
         try:
             num = int(num)
             assert 1 <= num <= len(paths)
-        except:
+        except Exception as e:
             await state.clear()
+            await state.set_state(MStates.CachePath.just_menu)
             await message.answer("Вы указали неправильный номер!", reply_markup=cache_menu())
             return
         path = paths[num - 1]
@@ -60,7 +62,7 @@ def hand(dp: Dispatcher):
         DBCachePath.cache_path_create(message.from_user.id, path)
         await message.answer("Ваш маршрут добавлен", reply_markup=cache_menu(), parse_mode=ParseMode.MARKDOWN_V2)
         ans = bl_path_view(message.from_user.id)
-        await message.answer(ans)
+        await message.answer(ans, parse_mode=ParseMode.MARKDOWN_V2)
 
     @dp.callback_query(PathCallbackFactory.filter())
     async def func(
@@ -108,3 +110,27 @@ def hand(dp: Dispatcher):
         await message.answer(ans,
                              reply_markup=cache_menu(),
                              parse_mode=ParseMode.MARKDOWN_V2)
+
+    @dp.message(MStates.CachePath.just_menu, F.text.casefold() == "удалить")
+    async def one_and_single(message: Message, state: FSMContext):
+        await state.set_state(MStates.CachePath.num_path)
+        await message.answer("Введите номер пути, который вы хотите удалить")
+
+    @dp.message(MStates.CachePath.num_path)
+    async def not_one_or_sigle(message: Message, state: FSMContext):
+
+        num = message.text
+        paths = DBCachePath.get_users_cache_path(message.from_user.id)
+        try:
+            num = int(num)
+            assert 1 <= num <= len(paths)
+        except Exception as e:
+            await state.clear()
+            await state.set_state(MStates.CachePath.just_menu)
+            await message.answer("Вы указали неправильный номер", reply_markup= cache_menu())
+
+        DBCachePath.del_cache_path(message.from_user.id, paths[num-1].path_id)
+
+        await state.clear()
+        await state.set_state(MStates.CachePath.just_menu)
+        await message.answer("Ваш маршрут удалён", reply_markup=cache_menu())

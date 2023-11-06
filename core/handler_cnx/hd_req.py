@@ -145,7 +145,7 @@ def hand(dp: Dispatcher):
             await state.update_data(req=req)
             await state.set_state(MStates.Request.get_args)
             await message.answer(
-                text="Введите станцию(ии) прибытия",
+                text="Введите параметры",
                 reply_markup=req_args.args(req)
             )
 
@@ -180,6 +180,7 @@ def hand(dp: Dispatcher):
         req: CacheRequest = (await state.get_data())['req']
         if isinstance(ans, str):
             await message.answer(ans, reply_markup=req_args.args(req))
+            await state.set_state(MStates.Request.get_args)
             return
         val_type, val = ans
         req.__setattr__(val_type, val)
