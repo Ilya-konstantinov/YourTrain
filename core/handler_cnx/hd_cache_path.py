@@ -95,16 +95,6 @@ def hand(dp: Dispatcher):
             reply_markup=req_args.stations()
         )
 
-    @dp.message(MStates.CachePath.just_menu, F.text.casefold() == "отмена")
-    async def _(message: Message, state: FSMContext) :
-        """
-        Возвращение к стандартному меню.
-        """
-        await state.clear()
-        await state.set_state(MStates.Menu.just_menu)
-        await message.answer("Возвращаю",
-                             reply_markup=keyboard.menu.menu(*bl_get_nearest_cache_req(message.from_user.id)[1:]))
-
     @dp.message(MStates.Menu.just_menu, F.text.casefold() == "сохранённые маршруты")
     async def _(message: Message, state: FSMContext):
         """

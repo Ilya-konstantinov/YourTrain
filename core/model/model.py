@@ -105,14 +105,16 @@ def get_station(station: str) -> Station | None:
     ) if raw_json else raw_json
 
 
-def nocache_path_view(pid: int):
+def nocache_path_view(pid: int) -> str:
     """
     Возвращает отображение данного пути.
     :param pid: id пути.
     :return: Строка для отображения пути.
     """
     stops = raw_req.get_whole_path(pid)
-    stops = [list(st[1])for st in
+    if not stops:
+        stops = "Произошла ошибка. Попробуйте сделать запрос заново"
+    stops = [list(st[1]) for st in
              sorted(
                      stops.items(),
                      key=lambda x: x[1][0]

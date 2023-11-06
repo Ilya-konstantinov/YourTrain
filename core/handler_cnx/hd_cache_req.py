@@ -35,7 +35,7 @@ def hand(dp: Dispatcher):
         """
         ans = await bl_all_req(message.from_user.id)
         await state.clear()
-        await state.set_state(MStates.CacheReq.just_cache)
+        await state.set_state(MStates.CacheReq.just_menu)
         await state.update_data(reqs=DBCacheReq.cache_req_whole_get(message.from_user.id))
         await message.answer(ans,
                              parse_mode=ParseMode.MARKDOWN_V2,
@@ -44,8 +44,8 @@ def hand(dp: Dispatcher):
                              )
                              )
 
-    @dp.message(MStates.CacheReq.just_cache, F.text.casefold() == "изменить")
-    @dp.message(MStates.CacheReq.just_cache, F.text.casefold() == "удалить")
+    @dp.message(MStates.CacheReq.just_menu, F.text.casefold() == "изменить")
+    @dp.message(MStates.CacheReq.just_menu, F.text.casefold() == "удалить")
     async def change_cached_req(message: Message, state: FSMContext):
         """
         Начало изменения сохранённого запроса.
@@ -66,7 +66,7 @@ def hand(dp: Dispatcher):
             num = int(message.text)
             assert 1 <= num <= len(reqs)
         except:
-            await state.set_state(MStates.CacheReq.just_cache)
+            await state.set_state(MStates.CacheReq.just_menu)
             await message.answer("Вы указали неправильный номер", reply_markup=cache_req.cache_req_reply(reqs))
             return
         req = reqs.pop(num - 1)
@@ -75,9 +75,10 @@ def hand(dp: Dispatcher):
         await state.update_data(req=req)
         await state.update_data(reqs=reqs)
         await state.update_data(old_req=req)
+
         if (await state.get_data())['action'] == "del":
             await message.answer("Вы успешно удалили запрос!", reply_markup=cache_req.cache_req_reply(reqs))
-            await state.set_state(MStates.CacheReq.just_cache)
+            await state.set_state(MStates.CacheReq.just_menu)
         else:
             await state.set_state(MStates.CacheReq.change_cached)
             await message.answer("Вот ваш запрос", reply_markup=cache_req.change_cached(req))
@@ -118,8 +119,9 @@ def hand(dp: Dispatcher):
         DBCacheReq.cache_req_create(req)
         reqs = (await state.get_data())["reqs"]
         reqs.append(req)
+        await state.clear()
         await state.update_data(reqs=reqs)
-        await state.set_state(MStates.CacheReq.just_cache)
+        await state.set_state(MStates.CacheReq.just_menu)
         await message.answer("Ваш запрос сохранён", reply_markup=cache_req.cache_req_reply(reqs))
 
     @dp.message(MStates.CacheReq.change_cached, F.text.casefold() == "отмена")
@@ -132,7 +134,7 @@ def hand(dp: Dispatcher):
         reqs = (await state.get_data())["reqs"]
         reqs.append(req)
         await state.update_data(reqs=reqs)
-        await state.set_state(MStates.CacheReq.just_cache)
+        await state.set_state(MStates.CacheReq.just_menu)
         await message.answer("Возвращаю", reply_markup=cache_req.cache_req_reply(reqs))
 
     @dp.message(MStates.CacheReq.change_args)
@@ -155,16 +157,7 @@ def hand(dp: Dispatcher):
         await message.answer("Ваше значение успешно изменено",
                              reply_markup=cache_req.change_cached(req))
 
-    @dp.message(MStates.CacheReq.just_cache, F.text.casefold() == "отмена")
-    async def close(message: Message, state: FSMContext):
-        """
-        Возвращение в стандартное меню.
-        """
-        await state.clear()
-        await state.set_state(MStates.Menu.just_menu)
-        await message.answer("Возвращаю", reply_markup=menu.menu(*bl_get_nearest_cache_req(message.from_user.id)))
-
-    @dp.message(MStates.CacheReq.just_cache, F.text.casefold() == "создать")
+    @dp.message(MStates.CacheReq.just_menu, F.text.casefold() == "создать")
     async def create(message: Message, state: FSMContext):
         """
         Начало создания нового запроса и ссылка на его имя.

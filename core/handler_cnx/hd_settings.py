@@ -48,14 +48,15 @@ def hand(dp: Dispatcher):
         """
         Переход от стандартного меню к меню настроек.
         """
-        await state.set_state(MStates.Settings.just_settings)
+        await state.clear()
+        await state.set_state(MStates.Settings.just_menu)
         param = DBUser.user_params(message.from_user.id)[1:]
         await message.answer(text="Меню настроек", reply_markup=settings_reply.give(*param))
 
-    @dp.message(MStates.Settings.just_settings, F.text.casefold() == 'отзыв')
+    @dp.message(MStates.Settings.just_menu, F.text.casefold() == 'отзыв')
     async def reply_command(message: Message, state: FSMContext) -> None:
         """
-        Вызов принятия аргументов анонимности для отзыва адину.
+        Вызов принятия аргументов анонимности для отзыва админу.
         """
         await state.clear()
         await state.set_state(MStates.Comment.get_args)
@@ -97,7 +98,7 @@ def hand(dp: Dispatcher):
             *bl_get_nearest_cache_req(message.from_user.id)
         ))
 
-    @dp.message(MStates.Settings.just_settings, F.text.casefold() == 'сбросить')
+    @dp.message(MStates.Settings.just_menu, F.text.casefold() == 'сбросить')
     async def set_recache_user(message: Message):
         """
         Сбрасывает параметры пользователя на параметры по умолчанию.
@@ -105,7 +106,7 @@ def hand(dp: Dispatcher):
         ans = await bl_recache_user(message.from_user.id, message.from_user.first_name)
         await message.answer(ans, reply_markup=settings_reply.give(*DBUser.user_params(message.from_user.id)[1:]))
 
-    @dp.message(MStates.Settings.just_settings, F.text.casefold() == 'скачать')
+    @dp.message(MStates.Settings.just_menu, F.text.casefold() == 'скачать')
     async def set_recache_user(message: Message):
         """
         Возвращает json настроек пользователя.
@@ -114,7 +115,7 @@ def hand(dp: Dispatcher):
         await message.reply_document(BufferedInputFile(json.encode(), filename="config.json"), caption="config.json",
                                      reply_markup=settings_reply.give(*DBUser.user_params(message.from_user.id)[1:]))
 
-    @dp.message(MStates.Settings.just_settings, F.text.casefold() == 'очистить полностью')
+    @dp.message(MStates.Settings.just_menu, F.text.casefold() == 'очистить полностью')
     async def set_del(message: Message):
         """
         Полностью удаляет информацию о сохранённых путях и запросах пользователя, а его настройки меняет на стандартные.
@@ -122,7 +123,7 @@ def hand(dp: Dispatcher):
         ans = await bl_del_user_info(message.from_user.id, message.from_user.first_name)
         await message.answer(ans, reply_markup=settings_reply.give(*DBUser.user_params(message.from_user.id)[1:]))
 
-    @dp.message(MStates.Settings.just_settings, F.text.casefold() == 'обратно')
+    @dp.message(MStates.Settings.just_menu, F.text.casefold() == 'обратно')
     async def set_back(message: Message, state: FSMContext):
         """
         Возвращение пользователя к стандартному меню.
@@ -133,10 +134,10 @@ def hand(dp: Dispatcher):
             *DBCacheReq.get_nearest(message.from_user.id)
         ))
 
-    @dp.message(MStates.Settings.just_settings, F.text.contains("электричек"))
-    @dp.message(MStates.Settings.just_settings, F.text.contains("сортировки"))
-    @dp.message(MStates.Settings.just_settings, F.text.contains("фильтрации"))
-    @dp.message(MStates.Settings.just_settings, F.text.casefold() == "имя")
+    @dp.message(MStates.Settings.just_menu, F.text.contains("электричек"))
+    @dp.message(MStates.Settings.just_menu, F.text.contains("сортировки"))
+    @dp.message(MStates.Settings.just_menu, F.text.contains("фильтрации"))
+    @dp.message(MStates.Settings.just_menu, F.text.casefold() == "имя")
     async def set_set(message: Message, state: FSMContext):
         """
         Изменение какого-либо параметра по умолчанию.
@@ -160,7 +161,7 @@ def hand(dp: Dispatcher):
         Возвращает пользователя в меню настроек.
         """
         await state.clear()
-        await state.set_state(MStates.Settings.just_settings)
+        await state.set_state(MStates.Settings.just_menu)
         await message.answer("Возвращаю", reply_markup=settings_reply.give(
             *DBUser.user_params(message.from_user.id)[1:]
         ))
@@ -176,4 +177,4 @@ def hand(dp: Dispatcher):
             *DBUser.user_params(message.from_user.id)[1:]
         ))
         await state.clear()
-        await state.set_state(MStates.Settings.just_settings)
+        await state.set_state(MStates.Settings.just_menu)

@@ -48,7 +48,7 @@ class Settings(StatesGroup):
     """
     Машина состояний настроек
     """
-    just_settings = State()
+    just_menu = State()
     change_def = State()
 
 
@@ -57,7 +57,7 @@ class CacheReq(StatesGroup):
     Машина состояний сохранённых запросов
     """
     change_args = State()
-    just_cache = State()
+    just_menu = State()
     change = State()
     change_cached = State()
     get_name = State()

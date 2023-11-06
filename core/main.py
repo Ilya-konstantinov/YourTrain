@@ -25,6 +25,8 @@ async def cmd_menu(message: Message, state: FSMContext):
     """
     Вызов основного меню
     """
+    if await state.get_state():
+        await state.clear()
     await state.set_state(MStates.Menu.just_menu)
     await message.answer(text="Вот твое меню", reply_markup=(menu.menu(
         *bl_get_nearest_cache_req(message.from_user.id)
