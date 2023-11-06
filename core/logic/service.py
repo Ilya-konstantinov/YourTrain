@@ -59,7 +59,8 @@ async def bl_set(user_id: int, args: str) -> str:
     if isinstance(is_cor, str):
         return is_cor
 
-    DBUser.set_params(uid=user_id, param_val=val, param_key=column_name)
+    if not DBUser.set_params(uid=user_id, param_val=val, param_key=column_name):
+        return SET.BAD_COL
 
     return SET.SUCCESS_F.format(args[0], args[1])
 
@@ -100,7 +101,7 @@ async def bl_recache_user(uid: int, name: str) -> str:
     """
     try:
         DBRecache.recache_user(uid, name)
-    except:
+    except Exception as e:
         return RECACHE.USER_ERROR
 
     return RECACHE.USER_SUCCESS

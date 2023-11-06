@@ -16,6 +16,7 @@ async def bl_mlt_req(user_id: int, args: str, raw_ans: bool = False):
     :return: Список путей если `raw_ans`=True или готовый ответ в ином случае. Если путей по данному запросу нет,
     возвращает сообщение об ошибке.
     """
+    args = args.strip()
     if not args:
         return BAD_REQUEST.ZERO_ARGS
 
@@ -38,10 +39,11 @@ async def bl_req(user_id: int, args: str, raw_ans: bool = False):
     :return: Список путей если `raw_ans`=True или готовый ответ в ином случае. Если путей по данному запросу нет,
     возвращает сообщение об ошибке.
     """
+    args = args.strip()
     if not args:
         return BAD_REQUEST.ZERO_ARGS
     args = args.replace('..', ':')
-    if args.count(' ') == 0:
+    if args.count(' ') == 0 or args.count(' ') > 6:
         return BAD_REQUEST.TOO_MANY_ARGS
 
     args = single_req_parse(user_id, args)
@@ -67,6 +69,8 @@ def mlt_ans(st_from, st_to, dep_time, sort_type, filter_type, col, raw_ans):
     """
     req: list[model.Path] = []
     dep_time = time_arg(dep_time)
+    if isinstance(dep_time, str):
+        return dep_time
     for fr in st_from:
         for to in st_to:
             req += model.req(station_from=fr, station_to=to, sort_type=sort_type, dep_time=dep_time,
@@ -100,6 +104,8 @@ def singe_ans(st1, st2, dep_time, sort_type, filter_type, col, raw_ans):
     возвращает сообщение об ошибке.
     """
     dep_time = time_arg(dep_time)
+    if isinstance(dep_time, str):
+        return dep_time
     req: list[model.Path] = model.req(station_from=st1, station_to=st2, dep_time=dep_time, sort_type=sort_type,
                                       filter_type=filter_type, col=col)
 
