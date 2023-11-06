@@ -4,6 +4,7 @@
     <option name="excludedDirectories">
       <list>
         <option value="$PROJECT_DIR$/env" />
+        <option value="$PROJECT_DIR$/core/venv" />
       </list>
     </option>
   </component>
