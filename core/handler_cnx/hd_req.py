@@ -37,7 +37,7 @@ def hand(dp: Dispatcher):
         await message.answer(
             text=ans + '\n⠀',
             parse_mode=ParseMode.MARKDOWN_V2,
-            reply_markup=req_inline.req_inline(args)
+            reply_markup=req_inline.req_inline(args, [])
         )
 
     @dp.message(Command("multi_req", "mltreq"))
@@ -69,12 +69,12 @@ def hand(dp: Dispatcher):
                 await callback.message.answer(
                     text=await bl_req(callback.from_user.id, callback_data.params),
                     parse_mode=ParseMode.MARKDOWN_V2,
-                    reply_markup=req_inline.req_inline(args)
+                    reply_markup=req_inline.req_inline(args, [])
                 )
             case "cache_path":
                 await state.clear()
                 await state.set_state(MStates.CachePath.get_path)
-                paths = await cache_path(callback.from_user.id,args)
+                paths = (await cache_path(callback.from_user.id,args))[1]
                 await state.update_data(
                     paths=paths
                 )
@@ -122,7 +122,7 @@ def hand(dp: Dispatcher):
                 await state.clear()
                 await state.set_state(MStates.Menu.just_menu)
                 await message.answer(check_station(station),
-                                     reply_markup=menu.menu(*bl_get_nearest_cache_req(message.from_user.id)[1:]))
+                                     reply_markup=menu.menu(*bl_get_nearest_cache_req(message.from_user.id)))
                 return
             if not DBStation.station_exists(
                     model.model.get_station(station)

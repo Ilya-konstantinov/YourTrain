@@ -1,3 +1,19 @@
+User_agent = ""
+
+Headers = {
+}
+
+TOKEN = ""  #
+
+ADMIN_CHAT_ID =   #
+
+DB_DATA = {  #
+    "username": "",
+    "passwd": "",
+    "database": "",
+    "host": "",
+    "port":
+}
 # Числовые интерпретации определений фильтрации
 sort_dict = {
     ('0', 'departure_time', 'dpt', "отправлении"): 0,

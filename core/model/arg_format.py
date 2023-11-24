@@ -125,7 +125,6 @@ def param_var(var: str) -> int | str:
     for tp in filter_dict:
         if var in tp:
             return filter_dict[tp]
-
     return var
 
 

@@ -128,7 +128,7 @@ def hand(dp: Dispatcher):
             await state.clear()
             await state.set_state(MStates.CachePath.just_menu)
             await message.answer("Вы указали неправильный номер", reply_markup= cache_menu())
-
+            return
         DBCachePath.del_cache_path(message.from_user.id, paths[num-1].path_id)
 
         await state.clear()

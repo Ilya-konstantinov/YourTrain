@@ -11,7 +11,10 @@ def req_inline(args: str, pids: list[int]) -> InlineKeyboardMarkup:
     :param args: Аргументы запроса.
     :return: Inline клавиатура с возможностями "повторить запрос", "сохранить маршрут" и "сохранить запрос".
     """
+
     builder = InlineKeyboardBuilder()
+    if not pids:
+        return builder.as_markup()
     builder.button(
         text="Повторить запрос",
         callback_data=ReqCallbackFactory(action="req", params=args)

@@ -203,7 +203,7 @@ def hand(dp: Dispatcher):
         if ans[0] != '`':
             await message.answer(ans)
             return
-        await message.answer(ans, parse_mode=ParseMode.MARKDOWN_V2, reply_markup=req_inline(message.text))
+        await message.answer(ans, parse_mode=ParseMode.MARKDOWN_V2)
 
     @dp.message(MStates.CacheRequest.get_name)
     async def get_name(message: Message, state: FSMContext):

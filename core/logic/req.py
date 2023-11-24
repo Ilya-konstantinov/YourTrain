@@ -292,6 +292,11 @@ async def bl_parse_change(val_type: str, val: str) -> tuple[str, str] | str:
     :param val: Значение параметра.
     :return: Преобразованные под системный стандарты название параметра и его значение или сообщение об ошибке.
     """
+    if val_type == "col":
+        if isinstance(is_cor_arg(val_type, val), str):
+            return is_cor_arg(val_type, val)
+        return val_type, int(val)
+
     val = param_var(val)
     if isinstance(is_cor_arg(val_type, val), str):
         return is_cor_arg(val_type, val)
@@ -312,5 +317,6 @@ def paths_ids(req: CacheRequest) -> list[int]:
         paths = mlt_ans(*stations, *args, raw_ans=True)
     else:
         paths = singe_ans(*(stations[0][0], stations[1][0]), *args, raw_ans=True)
-
+    if isinstance(paths, str):
+        return []
     return [path.path_id for path in paths]

@@ -39,11 +39,12 @@ def refresh_whole_path(bot) -> None:
     aioschedule.clear()
     paths: list[CachePath] = DBCachePath.get_whole_cache_path()
     for path in paths:
-        dep_time = path.dep_time
+        dep_time = path.dep_time - timedelta(minutes=30)
         aioschedule.every().day.at(f'{dep_time.seconds // 3600}:{dep_time.seconds % 3600 // 60}').do(
             refresh_path,
             bot=bot, path_old=path
         )
+        print(f"Cached path {path.path_id=} {path.user_id=} {dep_time} is in queue")
         # aioschedule.every(7).seconds.do(refresh_path, bot=bot, path_old=path)
 
 
@@ -113,7 +114,7 @@ async def refr_sched(bot) -> None:
     Установка времени распределения расписания и "ловля" процессов расписания.
     :param bot: Бот, от лица которого будут засылаться ответы.
     """
-    schedule.every().day.at("02:00").do(refresh_whole_path, bot=bot)
+    schedule.every().day.at("10:24").do(refresh_whole_path, bot=bot)
     # schedule.every(10).seconds.do(refresh_whole_path, bot=bot)
     while True:
         schedule.run_pending()
